@@ -4,7 +4,7 @@
 
 `analysis.analyze` accepts wheel bytes plus source ZIP bytes or a directory Path. Both interfaces call it and use the same Pydantic report. Paths are mapped only relative to the exact user-specified source prefix; no heuristic silently chooses between src layouts or archive wrappers. No common paths and wheel .data relocation produce PARTIAL coverage. Files outside the selected source prefix are counted as excluded.
 
-COMPLETE means complete supported byte comparison in the selected scope, not a full security investigation. Provenance/RECORD are NOT_CHECKED, AI is NOT_CONFIGURED, and policy_decision is null. Packaging metadata is informational by path only. Differences are review evidence, not malware verdicts. Source-only files are reported as removed, including files a legitimate build may intentionally omit.
+COMPLETE means complete supported static inspection in the selected scope, not a full security investigation. Provenance is NOT_CHECKED, AI is NOT_CONFIGURED, and policy_decision is null. RECORD consistency is now checked separately; missing/invalid/unsupported RECORD and unsupported static parsers make analysis PARTIAL. Packaging metadata is informational by path only. Differences are review evidence, not malware verdicts. Source-only files are reported as removed, including files a legitimate build may intentionally omit.
 
 ## Conservative input boundary
 
@@ -25,3 +25,11 @@ Default bind is 127.0.0.1, hosts are restricted, and non-loopback HTTP clients a
 ## Runtime AI
 
 No product AI model is used in milestone 1. The installed Qwen model described in the brief is a candidate for milestone 4, not verified application integration. Prior README/model declarations are corrected to reflect this distinction.
+
+## Milestone 2 — static inspection without execution
+
+Security checks live in security.py and run only through analysis.analyze. RECORD consistency is not provenance. A valid rewritten RECORD cannot hide independent source differences or introduced startup/capability indicators. We accept legacy signature-file exclusions without verifying signatures.
+
+AST parsing has explicit byte/node/indicator limits. Rules report syntactic references, with alias resolution but no reachability or binding proof. Unchanged capabilities are informational; newly introduced startup directives/modules are high priority. Static metadata comparisons stay within the explicit source scope, use exact-path or unambiguous single declarations, and never execute build metadata. Unknown baselines remain visible. Generated metadata classification is narrowed to recognized names, and known source-only root build configuration is informational with explicit uncertainty; arbitrary code under .dist-info is not exempted.
+
+Schema 1.1 extends 1.0 while retaining legacy report reading. Tool/rule versions and scan IDs change, preserving old stored results as originally analyzed. The Install impact preview is a structured evidence explorer; no call graph or runtime execution path is invented. See SECURITY_RULES.md for limitations and authoritative references.

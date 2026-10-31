@@ -1,3 +1,39 @@
+# Test evidence — milestone 2
+
+Executed 2026-11-01 on `codex/security-analysis`, based on merged PR #2. No target package code, startup directive, build backend or target test was executed.
+
+## Final local checks
+
+- `.venv/bin/python -m pytest -q`: **112 passed**, 1 upstream Starlette/httpx TestClient deprecation warning, Python **3.14.6**, 1.05s.
+- `.venv/bin/python -m build --no-isolation`: source distribution and **pkgtruth-0.2.0-py3-none-any.whl** built successfully.
+- Installed that wheel with `--no-deps --force-reinstall` into `/private/tmp/pkgtruth-py312-verify`, whose runtime/test dependencies were already installed.
+- From `/private/tmp`: `/private/tmp/pkgtruth-py312-verify/bin/python -m pytest /Users/ketan/pkgtruth/tests -q`: **112 passed**, same upstream warning, Python **3.12.15**, 0.99s. No pytest source-path override; application imports use the installed wheel.
+- Installed `pkgtruth --version`: **0.2.0**. Dependency consistency checked with `python -m pip check`.
+- `python examples/generate.py`: real clean, tampered, startup and record-mismatch inputs/reports and schema 1.1 generated. CI checks deterministic regeneration.
+- `git diff --check` and credential/unwanted-file review before commit.
+
+New security tests cover RECORD secure algorithms, canonical hash encoding, sizes, optional omitted sizes (UNRESOLVED rather than INVALID), self-entry, missing/unlisted paths, normalized duplicates, ambiguous metadata roots, unsupported algorithms, legacy signature exclusions without provenance claims, row/byte limits, and hash/size mismatches. A row-limit regression prevents claiming unread rows are absent.
+
+They also cover self-consistent rewritten RECORD with source tampering, new/unchanged/changed .pth directives, site/user customization modules, .data startup candidates, comments/plain paths/nested .pth false positives, AST imports/calls and aliases, strings/comments/relative-import false positives, line-moved unchanged capabilities, binary/bytecode inventory, malformed/oversized source, unknown source parsing, node/indicator limits, entry-point/dependency additions/changes/removals, matching static declarations and informational omission of root build configuration, dynamic/legacy/malformed metadata, arbitrary code under .dist-info, evidence stability/references, and original schema 1.0 report round-trip preservation.
+
+The existing archive/security suite remains active. Added web/CLI tests require equal security reports and correct exit codes for clean/tampered fixtures with valid RECORD, real results panels, escaping of security excerpts, and explicit review for missing RECORD. Previous clean test fixtures now include real RECORD metadata; no rejection rule was weakened. One oversized-parser fixture initially hit ZIP-ratio rejection; replaced it with varied valid source to exercise the intended parser boundary.
+
+## Running application and browser
+
+Started `PKGTRUTH_DATA_DIR=.pkgtruth/milestone2 pkgtruth serve --port 8002` on **127.0.0.1**. Separate persistence keeps the earlier milestone's running application/store isolated.
+
+`.venv/bin/python scripts/verify_running.py --port 8002` against the real server verified all four scenarios: upload POST **303**, JSON export **200**, rendered results **200**, and exact report equality with the shared engine. Clean/tampered/startup have VALID RECORD; record-mismatch has INVALID RECORD. The startup case explicitly requires a HIGH PTH_EXECUTION finding even with valid RECORD.
+
+Browser results showed the actual startup investigation (`bfe06004e6a72ddf5b333ab9f4ab14a9`): **1 HIGH / 5 MEDIUM**, **VALID RECORD**, **7 file digests checked**, NEW NETWORK_CAPABILITY and NEW PTH_EXECUTION. Expanding the startup indicator showed the actual `import demo; demo.VALUE = 2` directive and evidence `E-S-3c075a4785b6aefd`. The preview explicitly states that execution/reachability are not established.
+
+The embedded-browser upload Origin:null restriction remains intentional. Full mouse-driven upload in an external browser is still an unverified manual check; same-origin HTTP uploads and UI results are tested. No protection was bypassed for testing.
+
+## Remote CI and remaining scope
+
+Milestone 2 PR/remote CI: pending publication. Do not infer remote success from local results. PyPI retrieval, authenticated source/provenance, runtime reachability, AI, release DNA/history, policies and public production readiness remain outside this milestone. Static aliases/declarations have documented uncertainty; see SECURITY_RULES.md.
+
+---
+
 # Test evidence — milestone 1
 
 Executed locally on 2026-11-01, on `feat/local-analysis`. No target package code was installed, imported, built or executed.

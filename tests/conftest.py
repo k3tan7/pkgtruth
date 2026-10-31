@@ -1,4 +1,7 @@
 import io
+import base64
+import csv
+import hashlib
 import zipfile
 import pytest
 
@@ -9,6 +12,27 @@ def make_zip(files):
         for path, value in files.items():
             archive.writestr(path, value)
     return buffer.getvalue()
+
+
+def wheel_files(files):
+    payload = {
+        'demo-1.0.dist-info/METADATA': b'Metadata-Version: 2.1\nName: demo\nVersion: 1.0\n',
+        'demo-1.0.dist-info/WHEEL': b'Wheel-Version: 1.0\nRoot-Is-Purelib: true\nTag: py3-none-any\n',
+        **files,
+    }
+    record = 'demo-1.0.dist-info/RECORD'
+    text = io.StringIO(newline='')
+    writer = csv.writer(text, lineterminator='\n')
+    for path, data in sorted(payload.items()):
+        if path != record:
+            writer.writerow([path, 'sha256=' + base64.urlsafe_b64encode(hashlib.sha256(data).digest()).decode().rstrip('='), str(len(data))])
+    writer.writerow([record, '', ''])
+    payload[record] = text.getvalue().encode()
+    return payload
+
+
+def make_wheel(files):
+    return make_zip(wheel_files(files))
 
 
 @pytest.fixture

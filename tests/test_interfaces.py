@@ -9,7 +9,7 @@ from pkgtruth.cli import main
 from pkgtruth.models import Report
 from pkgtruth.storage import ReportStore
 from pkgtruth.web import create_app, MAX_REQUEST
-from conftest import make_zip
+from conftest import make_zip, make_wheel
 
 
 @pytest.fixture
@@ -26,9 +26,10 @@ def upload(client, wheel, source, prefix=''):
 
 @pytest.mark.parametrize('tampered', [False, True])
 def test_web_cli_engine_equivalence(client, tmp_path, package_pair, tampered):
-    files, wheel = package_pair
+    files, _ = package_pair
+    wheel = make_wheel(files)
     if tampered:
-        wheel = make_zip({**files, 'demo/__init__.py': b'VALUE = 99\n'})
+        wheel = make_wheel({**files, 'demo/__init__.py': b'VALUE = 99\n'})
     wheel_path, source_path = tmp_path / 'demo.whl', tmp_path / 'source.zip'
     wheel_path.write_bytes(wheel)
     source_path.write_bytes(make_zip(files))
@@ -109,7 +110,7 @@ def test_web_partial_mapping_state(client, package_pair):
     response = upload(client, wheel, make_zip({'src/' + k: v for k, v in files.items()}))
     page = client.get(response.headers['location'])
     assert 'PARTIAL' in page.text
-    assert 'Mapping needs review' in page.text
+    assert 'Coverage needs review' in page.text
 
 
 def test_built_assets_available(client):
@@ -141,3 +142,53 @@ def test_storage_failure_is_an_explicit_error(client, tmp_path, package_pair, mo
     source_path.write_bytes(wheel)
     assert main(['scan', 'local', '--wheel', str(wheel_path), '--source', str(source_path)]) == 2
     assert 'database is locked' in capsys.readouterr().err
+
+
+@pytest.mark.parametrize('tampered', [False, True])
+def test_security_findings_match_web_and_cli(client, tmp_path, tampered):
+    source = {'demo.py': b'VALUE=1\n'}
+    payload = {'demo.py': b'import subprocess as sp\nsp.run([])\n', 'startup.pth': b'import demo\n'} if tampered else source
+    wheel = make_wheel(payload)
+    wheel_path, source_path = tmp_path / 'demo.whl', tmp_path / 'source.zip'
+    wheel_path.write_bytes(wheel)
+    source_path.write_bytes(make_zip(source))
+    process = subprocess.run([sys.executable, '-m', 'pkgtruth.cli', 'scan', 'local', '--wheel', str(wheel_path),
+        '--source', str(source_path), '--json'], capture_output=True, text=True, cwd=tmp_path)
+    assert process.returncode == (1 if tampered else 0), process.stderr
+    cli_report = Report.model_validate_json(process.stdout)
+    response = upload(client, wheel, make_zip(source))
+    assert response.status_code == 303
+    url = response.headers['location']
+    assert Report.model_validate(client.get(url + '/report.json').json()) == cli_report
+    assert cli_report.record_status == 'VALID'
+    page = client.get(url)
+    assert page.status_code == 200
+    assert 'Install impact preview' in page.text
+    assert 'Entry points &amp; dependencies' in page.text
+    if tampered:
+        assert 'PTH_EXECUTION' in page.text
+        assert 'SUBPROCESS_CAPABILITY' in page.text
+        assert any(f.severity == 'HIGH' for f in cli_report.findings)
+    else:
+        assert not cli_report.behavior_indicators
+
+
+def test_cli_missing_record_requires_review_and_explains_status(tmp_path, capsys):
+    wheel = tmp_path / 'demo.whl'
+    source = tmp_path / 'source.zip'
+    wheel.write_bytes(make_zip({'demo.py': b'pass\n'}))
+    source.write_bytes(wheel.read_bytes())
+    assert main(['scan', 'local', '--wheel', str(wheel), '--source', str(source)]) == 1
+    text = capsys.readouterr().out
+    assert 'RECORD: UNAVAILABLE' in text
+    assert 'PARTIAL' in text
+
+
+def test_web_escapes_security_evidence(client):
+    code = b'eval("<script>alert(1)</script>")\n'
+    response = upload(client, make_wheel({'demo.py': code}), make_zip({'demo.py': b'pass\n'}))
+    page = client.get(response.headers['location'])
+    assert page.status_code == 200
+    assert '<script>alert' not in page.text
+    assert '&lt;script&gt;' in page.text
+    assert 'DYNAMIC_EXECUTION' in page.text

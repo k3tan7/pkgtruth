@@ -38,8 +38,9 @@ def render(report: Report) -> str:
         f'Artifact SHA-256: {report.artifact_sha256}',
         f'Files: {c.identical} identical / {c.modified} modified / {c.added} added / {c.removed} removed',
         *[f'[{f.severity}] {f.id} {f.explanation}' for f in report.findings],
-        'Provenance / RECORD: NOT_CHECKED. AI: NOT_CONFIGURED. Policy: not evaluated.',
-        'Byte comparison covers the selected scope only. Matching content does not prove safety.',
+        f'RECORD: {report.record_status} (consistency only). Provenance: NOT_CHECKED. AI: NOT_CONFIGURED. Policy: not evaluated.',
+        f'Static indicators: {len(report.behavior_indicators)} / metadata comparisons: {len(report.metadata_changes)}',
+        'Static inspection covers the selected scope only. Matching content does not prove safety.',
     ])
 
 

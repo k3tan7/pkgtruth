@@ -72,7 +72,7 @@ class LocalBoundary:
 
 
 def create_app(store: ReportStore | None = None) -> FastAPI:
-    app = FastAPI(title='pkgtruth', version='0.1.0', docs_url=None, redoc_url=None)
+    app = FastAPI(title='pkgtruth', version='0.2.0', docs_url=None, redoc_url=None)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=['127.0.0.1', 'localhost', '[::1]', 'testserver'])
     app.add_middleware(LocalBoundary)
     app.mount('/static', StaticFiles(directory=ROOT / 'static'), name='static')
@@ -155,7 +155,8 @@ def create_app(store: ReportStore | None = None) -> FastAPI:
 
     @app.get('/scans/{scan_id}', response_class=HTMLResponse)
     def result(request: Request, scan_id: str):
-        return page(request, 'result.html', report=lookup(scan_id))
+        report = lookup(scan_id)
+        return page(request, 'result.html', report=report, evidence_lookup={item.id: item for item in report.evidence})
 
     @app.get('/scans/{scan_id}/report.json')
     def export(scan_id: str):

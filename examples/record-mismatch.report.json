@@ -1,0 +1,281 @@
+{
+  "schema_version": "1.1",
+  "tool_version": "0.2.0",
+  "rule_version": "static-security-2",
+  "scan_id": "a8de293e645ebc687d86624f2ec81b19",
+  "analysis_status": "PARTIAL",
+  "input_artifact": "record-mismatch.whl",
+  "source_resolution": "LOCAL_USER_MAPPING",
+  "artifact_sha256": "c4ac01e0b0fa797c6a24332fd29811564642613c1778e0912742c60b593e52c3",
+  "source_tree_sha256": "6e23e2147fdd9ad2c363af9c8f650dc3c42cf253c2fb4756f9f6d12a33fe3b45",
+  "source_commit": null,
+  "mappings": [
+    {
+      "source_prefix": "",
+      "artifact_prefix": "",
+      "method": "explicit_relative_path"
+    }
+  ],
+  "file_differences": [
+    {
+      "path": "demo-1.0.dist-info/METADATA",
+      "source_path": null,
+      "status": "added",
+      "artifact_sha256": "34aa27a6064f958b41b781a217f290fd0ab5f9651e2b6e4acdab341b7b93c305",
+      "source_sha256": null,
+      "classification": "packaging_metadata",
+      "evidence_id": "E-b18dced87388d389",
+      "binary": false,
+      "diff": "--- source/demo-1.0.dist-info/METADATA\n+++ wheel/demo-1.0.dist-info/METADATA\n@@ -0,0 +1,3 @@\n+Metadata-Version: 2.1\n+Name: demo\n+Version: 1.0\n",
+      "excerpt_truncated": false
+    },
+    {
+      "path": "demo-1.0.dist-info/RECORD",
+      "source_path": null,
+      "status": "added",
+      "artifact_sha256": "2a89d235164ca344d0811782ad512aa018e48a75b86bb68aff8b27df9bd76fea",
+      "source_sha256": null,
+      "classification": "packaging_metadata",
+      "evidence_id": "E-480f7c4135bfa03d",
+      "binary": false,
+      "diff": "--- source/demo-1.0.dist-info/RECORD\n+++ wheel/demo-1.0.dist-info/RECORD\n@@ -0,0 +1,6 @@\n+demo-1.0.dist-info/METADATA,sha256=NKonpgZPlYtBt4GiF_KQ_Qq1-WUeK25Kzas0G3uTwwU,46\n+demo-1.0.dist-info/WHEEL,sha256=IFiGwbMoEWDDJhhl4Y-JlrNS9m7g9TYUJi8VBDUEIds,87\n+demo/__init__.py,sha256=hel9tVLU4jCYT2uJGIuQuI91vPdTHpp5AaORtZ_KX-o,40\n+demo/extra.py,sha256=k3j8VU53yA-Bp92NIWKX8bQ-PC7KmM3F2DqTjqd-1NI,18\n+demo/message.py,sha256=GOqGc29l1mJYylFFw7Buo9KepmA268AeLVYDYaOb9Pk,49\n+demo-1.0.dist-info/RECORD,,\n",
+      "excerpt_truncated": false
+    },
+    {
+      "path": "demo-1.0.dist-info/WHEEL",
+      "source_path": null,
+      "status": "added",
+      "artifact_sha256": "205886c1b3281160c3261865e18f8996b352f66ee0f53614262f1504350421db",
+      "source_sha256": null,
+      "classification": "packaging_metadata",
+      "evidence_id": "E-dd3f69cfc81396a6",
+      "binary": false,
+      "diff": "--- source/demo-1.0.dist-info/WHEEL\n+++ wheel/demo-1.0.dist-info/WHEEL\n@@ -0,0 +1,4 @@\n+Wheel-Version: 1.0\n+Generator: pkgtruth-example\n+Root-Is-Purelib: true\n+Tag: py3-none-any\n",
+      "excerpt_truncated": false
+    },
+    {
+      "path": "demo/__init__.py",
+      "source_path": "demo/__init__.py",
+      "status": "identical",
+      "artifact_sha256": "85e97db552d4e230984f6b89188b90b88f75bcf7531e9a7901a391b59fca5fea",
+      "source_sha256": "85e97db552d4e230984f6b89188b90b88f75bcf7531e9a7901a391b59fca5fea",
+      "classification": "identical",
+      "evidence_id": "E-5e4ff052ca0c6143",
+      "binary": false,
+      "diff": "",
+      "excerpt_truncated": false
+    },
+    {
+      "path": "demo/extra.py",
+      "source_path": null,
+      "status": "added",
+      "artifact_sha256": "9378fc554e77c80f81a7dd8d216297f1b43e3c2eca98cdc5d83a938ea77ed4d2",
+      "source_sha256": null,
+      "classification": "unexplained",
+      "evidence_id": "E-990c854162472d40",
+      "binary": false,
+      "diff": "--- source/demo/extra.py\n+++ wheel/demo/extra.py\n@@ -0,0 +1 @@\n+UNEXPECTED = True\n",
+      "excerpt_truncated": false
+    },
+    {
+      "path": "demo/message.py",
+      "source_path": "demo/message.py",
+      "status": "modified",
+      "artifact_sha256": "153b07061c266faebb8b570bbefc792a67f30683f48e738ad28c374175f05677",
+      "source_sha256": "f5443387c1e73b533b8e55700403d19fe4a2e7e6a707191e26fa45184b1e33eb",
+      "classification": "unexplained",
+      "evidence_id": "E-84ef4d7abf389c11",
+      "binary": false,
+      "diff": "--- source/demo/message.py\n+++ wheel/demo/message.py\n@@ -1,2 +1,2 @@\n def message():\n-    return \"reviewed source\"\n+    return \"changed after RECORD was written\"\n",
+      "excerpt_truncated": false
+    }
+  ],
+  "record_status": "INVALID",
+  "record_check": {
+    "status": "INVALID",
+    "path": "demo-1.0.dist-info/RECORD",
+    "checked_files": 5,
+    "issues": [
+      {
+        "path": "demo/message.py",
+        "reason": "Recorded size is malformed or mismatches content"
+      },
+      {
+        "path": "demo/message.py",
+        "reason": "Recorded hash mismatches content or digest encoding"
+      }
+    ]
+  },
+  "behavior_indicators": [],
+  "metadata_changes": [
+    {
+      "path": "demo-1.0.dist-info/METADATA",
+      "field": "console_scripts",
+      "source_path": null,
+      "source_values": null,
+      "artifact_values": [],
+      "relation": "UNKNOWN",
+      "evidence_ids": [
+        "E-b18dced87388d389"
+      ]
+    },
+    {
+      "path": "demo-1.0.dist-info/METADATA",
+      "field": "dependencies",
+      "source_path": null,
+      "source_values": null,
+      "artifact_values": [],
+      "relation": "UNKNOWN",
+      "evidence_ids": [
+        "E-b18dced87388d389"
+      ]
+    },
+    {
+      "path": "demo-1.0.dist-info/METADATA",
+      "field": "gui_scripts",
+      "source_path": null,
+      "source_values": null,
+      "artifact_values": [],
+      "relation": "UNKNOWN",
+      "evidence_ids": [
+        "E-b18dced87388d389"
+      ]
+    }
+  ],
+  "provenance_status": "NOT_CHECKED",
+  "coverage": {
+    "artifact_files": 6,
+    "source_files": 2,
+    "compared_files": 6,
+    "identical": 1,
+    "added": 4,
+    "removed": 0,
+    "modified": 1,
+    "excluded_source_files": 0,
+    "byte_limit_per_file": 2097152
+  },
+  "findings": [
+    {
+      "id": "F-b18dced87388d389",
+      "rule": "PACKAGING_METADATA",
+      "severity": "INFORMATIONAL",
+      "explanation": "demo-1.0.dist-info/METADATA: added. Wheel packaging metadata can be generated; its legitimacy is not verified.",
+      "evidence_ids": [
+        "E-b18dced87388d389"
+      ]
+    },
+    {
+      "id": "F-480f7c4135bfa03d",
+      "rule": "PACKAGING_METADATA",
+      "severity": "INFORMATIONAL",
+      "explanation": "demo-1.0.dist-info/RECORD: added. Wheel packaging metadata can be generated; its legitimacy is not verified.",
+      "evidence_ids": [
+        "E-480f7c4135bfa03d"
+      ]
+    },
+    {
+      "id": "F-dd3f69cfc81396a6",
+      "rule": "PACKAGING_METADATA",
+      "severity": "INFORMATIONAL",
+      "explanation": "demo-1.0.dist-info/WHEEL: added. Wheel packaging metadata can be generated; its legitimacy is not verified.",
+      "evidence_ids": [
+        "E-dd3f69cfc81396a6"
+      ]
+    },
+    {
+      "id": "F-990c854162472d40",
+      "rule": "CONTENT_DIFFERENCE",
+      "severity": "MEDIUM",
+      "explanation": "demo/extra.py: added relative to the selected source root. Review the difference; it does not establish malicious behavior.",
+      "evidence_ids": [
+        "E-990c854162472d40"
+      ]
+    },
+    {
+      "id": "F-84ef4d7abf389c11",
+      "rule": "CONTENT_DIFFERENCE",
+      "severity": "MEDIUM",
+      "explanation": "demo/message.py: modified relative to the selected source root. Review the difference; it does not establish malicious behavior.",
+      "evidence_ids": [
+        "E-84ef4d7abf389c11"
+      ]
+    },
+    {
+      "id": "F-R-86a3f4588214e4b6",
+      "rule": "RECORD_INVALID",
+      "severity": "HIGH",
+      "explanation": "Wheel RECORD is INVALID. Inspect the consistency issues; no publisher authenticity is established.",
+      "evidence_ids": [
+        "E-R-86a3f4588214e4b6"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "E-b18dced87388d389",
+      "path": "demo-1.0.dist-info/METADATA",
+      "description": "added: SHA-256 comparison against the explicitly mapped source",
+      "source_excerpt": null,
+      "artifact_excerpt": "Metadata-Version: 2.1\nName: demo\nVersion: 1.0\n"
+    },
+    {
+      "id": "E-480f7c4135bfa03d",
+      "path": "demo-1.0.dist-info/RECORD",
+      "description": "added: SHA-256 comparison against the explicitly mapped source",
+      "source_excerpt": null,
+      "artifact_excerpt": "demo-1.0.dist-info/METADATA,sha256=NKonpgZPlYtBt4GiF_KQ_Qq1-WUeK25Kzas0G3uTwwU,46\ndemo-1.0.dist-info/WHEEL,sha256=IFiGwbMoEWDDJhhl4Y-JlrNS9m7g9TYUJi8VBDUEIds,87\ndemo/__init__.py,sha256=hel9tVLU4jCYT2uJGIuQuI91vPdTHpp5AaORtZ_KX-o,40\ndemo/extra.py,sha256=k3j8VU53yA-Bp92NIWKX8bQ-PC7KmM3F2DqTjqd-1NI,18\ndemo/message.py,sha256=GOqGc29l1mJYylFFw7Buo9KepmA268AeLVYDYaOb9Pk,49\ndemo-1.0.dist-info/RECORD,,\n"
+    },
+    {
+      "id": "E-dd3f69cfc81396a6",
+      "path": "demo-1.0.dist-info/WHEEL",
+      "description": "added: SHA-256 comparison against the explicitly mapped source",
+      "source_excerpt": null,
+      "artifact_excerpt": "Wheel-Version: 1.0\nGenerator: pkgtruth-example\nRoot-Is-Purelib: true\nTag: py3-none-any\n"
+    },
+    {
+      "id": "E-5e4ff052ca0c6143",
+      "path": "demo/__init__.py",
+      "description": "identical: SHA-256 comparison against the explicitly mapped source",
+      "source_excerpt": "\"\"\"Inert pkgtruth example.\"\"\"\nVALUE = 1\n",
+      "artifact_excerpt": "\"\"\"Inert pkgtruth example.\"\"\"\nVALUE = 1\n"
+    },
+    {
+      "id": "E-990c854162472d40",
+      "path": "demo/extra.py",
+      "description": "added: SHA-256 comparison against the explicitly mapped source",
+      "source_excerpt": null,
+      "artifact_excerpt": "UNEXPECTED = True\n"
+    },
+    {
+      "id": "E-84ef4d7abf389c11",
+      "path": "demo/message.py",
+      "description": "modified: SHA-256 comparison against the explicitly mapped source",
+      "source_excerpt": "def message():\n    return \"reviewed source\"\n",
+      "artifact_excerpt": "def message():\n    return \"changed after RECORD was written\"\n"
+    },
+    {
+      "id": "E-R-86a3f4588214e4b6",
+      "path": "demo-1.0.dist-info/RECORD",
+      "description": "RECORD consistency INVALID: 5 file digests checked. This is not provenance verification.",
+      "source_excerpt": null,
+      "artifact_excerpt": "demo/message.py: Recorded size is malformed or mismatches content\ndemo/message.py: Recorded hash mismatches content or digest encoding"
+    }
+  ],
+  "historical_anomalies": [],
+  "model_status": "NOT_CONFIGURED",
+  "ai_assessments": [],
+  "policy_decision": null,
+  "limitations": [
+    "Local user-selected source is not authenticated and is not tied to a repository commit.",
+    "Static inspection only: no target code was executed. Matching files do not prove safety.",
+    "RECORD checks internal consistency only. A rewritten valid RECORD does not authenticate a publisher or establish safety.",
+    "Static Python rules are syntactic: aliases, local modules, shadowing, indirect calls, runtime code and reachability are not resolved.",
+    "Python, PTH and metadata parsing is limited to 128 KiB per file and 20,000 AST nodes. Unparsed files make analysis PARTIAL.",
+    "Source metadata outside the selected prefix is not used; missing or dynamic declarations leave metadata comparisons UNKNOWN.",
+    "Provenance, AI, historical analysis and release policies are not checked.",
+    "Packaging metadata is identified by path only; generated content is not verified.",
+    "Source-prefix selection defines scope. Files outside that prefix are counted but excluded.",
+    "Text excerpts and diffs are bounded previews; SHA-256 hashes cover full inspected contents.",
+    "No in-scope source metadata baseline: dependency/entry-point changes cannot be established. Choose a source root containing static project metadata to compare declarations."
+  ]
+}

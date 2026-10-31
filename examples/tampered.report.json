@@ -1,8 +1,8 @@
 {
-  "schema_version": "1.0",
-  "tool_version": "0.1.0",
-  "rule_version": "local-comparison-1",
-  "scan_id": "ee29a2414bfd0618082177d59fce129a",
+  "schema_version": "1.1",
+  "tool_version": "0.2.0",
+  "rule_version": "static-security-2",
+  "scan_id": "a26e9e4fef868f0041f5cc1c33c28c43",
   "analysis_status": "COMPLETE",
   "input_artifact": "tampered.whl",
   "source_resolution": "LOCAL_USER_MAPPING",
@@ -90,7 +90,49 @@
       "excerpt_truncated": false
     }
   ],
-  "record_status": "NOT_CHECKED",
+  "record_status": "VALID",
+  "record_check": {
+    "status": "VALID",
+    "path": "demo-1.0.dist-info/RECORD",
+    "checked_files": 5,
+    "issues": []
+  },
+  "behavior_indicators": [],
+  "metadata_changes": [
+    {
+      "path": "demo-1.0.dist-info/METADATA",
+      "field": "console_scripts",
+      "source_path": null,
+      "source_values": null,
+      "artifact_values": [],
+      "relation": "UNKNOWN",
+      "evidence_ids": [
+        "E-b18dced87388d389"
+      ]
+    },
+    {
+      "path": "demo-1.0.dist-info/METADATA",
+      "field": "dependencies",
+      "source_path": null,
+      "source_values": null,
+      "artifact_values": [],
+      "relation": "UNKNOWN",
+      "evidence_ids": [
+        "E-b18dced87388d389"
+      ]
+    },
+    {
+      "path": "demo-1.0.dist-info/METADATA",
+      "field": "gui_scripts",
+      "source_path": null,
+      "source_values": null,
+      "artifact_values": [],
+      "relation": "UNKNOWN",
+      "evidence_ids": [
+        "E-b18dced87388d389"
+      ]
+    }
+  ],
   "provenance_status": "NOT_CHECKED",
   "coverage": {
     "artifact_files": 6,
@@ -192,6 +234,13 @@
       "description": "modified: SHA-256 comparison against the explicitly mapped source",
       "source_excerpt": "def message():\n    return \"reviewed source\"\n",
       "artifact_excerpt": "def message():\n    return \"changed after review\"\n"
+    },
+    {
+      "id": "E-R-4f82d953828c92ed",
+      "path": "demo-1.0.dist-info/RECORD",
+      "description": "RECORD consistency VALID: 5 file digests checked. This is not provenance verification.",
+      "source_excerpt": null,
+      "artifact_excerpt": ""
     }
   ],
   "historical_anomalies": [],
@@ -200,10 +249,15 @@
   "policy_decision": null,
   "limitations": [
     "Local user-selected source is not authenticated and is not tied to a repository commit.",
-    "Static byte comparison only: no target code was executed. Matching files do not prove safety.",
-    "RECORD, provenance, startup hooks, AST capabilities, AI, history and release policies are not checked in milestone 1.",
+    "Static inspection only: no target code was executed. Matching files do not prove safety.",
+    "RECORD checks internal consistency only. A rewritten valid RECORD does not authenticate a publisher or establish safety.",
+    "Static Python rules are syntactic: aliases, local modules, shadowing, indirect calls, runtime code and reachability are not resolved.",
+    "Python, PTH and metadata parsing is limited to 128 KiB per file and 20,000 AST nodes. Unparsed files make analysis PARTIAL.",
+    "Source metadata outside the selected prefix is not used; missing or dynamic declarations leave metadata comparisons UNKNOWN.",
+    "Provenance, AI, historical analysis and release policies are not checked.",
     "Packaging metadata is identified by path only; generated content is not verified.",
     "Source-prefix selection defines scope. Files outside that prefix are counted but excluded.",
-    "Text excerpts and diffs are bounded previews; SHA-256 hashes cover full inspected contents."
+    "Text excerpts and diffs are bounded previews; SHA-256 hashes cover full inspected contents.",
+    "No in-scope source metadata baseline: dependency/entry-point changes cannot be established. Choose a source root containing static project metadata to compare declarations."
   ]
 }
