@@ -17,7 +17,7 @@ def test_clean_is_reproducible_and_validates(package_pair):
     assert all(f.rule == 'PACKAGING_METADATA' and f.severity == 'INFORMATIONAL' for f in one.findings)
     assert one.provenance_status == 'NOT_CHECKED'
     assert one.record_status == 'VALID'
-    assert one.policy_decision is None
+    assert one.policy_decision.decision == 'ALLOW'
     assert Report.model_validate_json(one.model_dump_json()) == one
 
 

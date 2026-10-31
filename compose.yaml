@@ -1,0 +1,23 @@
+services:
+  pkgtruth:
+    build: .
+    # Linux host networking preserves loopback-only access controls. No public bind.
+    network_mode: host
+    environment:
+      PKGTRUTH_DATA_DIR: /data
+      PKGTRUTH_OLLAMA_URL: ${PKGTRUTH_OLLAMA_URL:-http://127.0.0.1:11434}
+    volumes:
+      - reports:/data
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=67108864
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 1g
+    cpus: 1.0
+    restart: unless-stopped
+volumes:
+  reports:

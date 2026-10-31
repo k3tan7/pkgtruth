@@ -1,0 +1,16 @@
+.git
+.venv
+.pkgtruth
+.pytest_cache
+**/__pycache__
+dist
+build
+*.egg-info
+examples
+.env*
+.aws
+.codex
+.agents
+*.sqlite3
+*.db
+.DS_Store

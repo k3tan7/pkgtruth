@@ -8,7 +8,7 @@ from pathlib import Path
 from time import monotonic
 
 from .inputs import InputError, MAX_FILE, read_directory, read_zip, safe_path
-from .security import SOURCE_CONFIGURATION, inspect_security, packaging_metadata
+from .security import SOURCE_CONFIGURATION, inspect_security, packaging_metadata, wheel_identity
 from .models import Coverage, Difference, Evidence, Finding, Mapping, Report
 
 
@@ -29,7 +29,7 @@ def decode(content: bytes | None) -> str | None:
         return None
 
 
-def analyze(wheel: bytes, source: bytes | Path, *, artifact_name: str = 'local.whl', source_prefix: str = '') -> Report:
+def analyze(wheel: bytes, source: bytes | Path | None, *, artifact_name: str = 'local.whl', source_prefix: str = '') -> Report:
     """Compare a wheel against a ZIP or directory; no heuristically guessed mapping."""
     started = monotonic()
     def deadline():
@@ -37,12 +37,12 @@ def analyze(wheel: bytes, source: bytes | Path, *, artifact_name: str = 'local.w
             raise InputError('Analysis time limit exceeded')
 
     artifact = read_zip(wheel)
-    original = read_directory(source) if isinstance(source, Path) else read_zip(source)
+    original = {} if source is None else read_directory(source) if isinstance(source, Path) else read_zip(source)
     if source_prefix:
         safe_path(source_prefix)
     prefix = source_prefix + '/' if source_prefix else ''
     mapped = {name[len(prefix):]: value for name, value in original.items() if name.startswith(prefix)}
-    if not mapped:
+    if not mapped and source is not None:
         raise InputError('Source prefix matches no files; choose an explicit source root')
     wheel_sha = sha(wheel)
     source_sha = tree_sha(original)
@@ -78,13 +78,13 @@ def analyze(wheel: bytes, source: bytes | Path, *, artifact_name: str = 'local.w
             description=f'{status}: SHA-256 comparison against the explicitly mapped source',
             source_excerpt=stext[:2048] if stext is not None else None,
             artifact_excerpt=atext[:2048] if atext is not None else None))
-        if status != 'identical':
+        if status != 'identical' and source is not None:
             findings.append(Finding(id='F-' + evidence_id[2:], rule='PACKAGING_METADATA' if metadata else 'SOURCE_PACKAGING_CONFIGURATION' if configuration else 'CONTENT_DIFFERENCE',
                 severity='INFORMATIONAL' if metadata or configuration else 'MEDIUM', evidence_ids=[evidence_id],
                 explanation=(f'{path}: source-only packaging configuration, commonly omitted from a wheel. No build was run; omission legitimacy is not verified.' if configuration else
                              f'{path}: {status}. Wheel packaging metadata can be generated; its legitimacy is not verified.' if metadata else
                              f'{path}: {status} relative to the selected source root. Review the difference; it does not establish malicious behavior.')))
-    record, indicators, metadata_changes, security_partial, security_notes = inspect_security(artifact, mapped, differences, evidence, findings, deadline)
+    record, indicators, metadata_changes, security_partial, security_notes, imports = inspect_security(artifact, mapped, differences, evidence, findings, deadline, source_available=source is not None)
     deadline()
     overlap = sum(d.status in ('modified', 'identical') for d in differences)
     partial = security_partial or not overlap or any(name.split('/')[0].endswith('.data') for name in artifact)
@@ -95,21 +95,30 @@ def analyze(wheel: bytes, source: bytes | Path, *, artifact_name: str = 'local.w
         'Static Python rules are syntactic: aliases, local modules, shadowing, indirect calls, runtime code and reachability are not resolved.',
         'Python, PTH and metadata parsing is limited to 128 KiB per file and 20,000 AST nodes. Unparsed files make analysis PARTIAL.',
         'Source metadata outside the selected prefix is not used; missing or dynamic declarations leave metadata comparisons UNKNOWN.',
-        'Provenance, AI, historical analysis and release policies are not checked.',
+        'Provenance is not authenticated. AI and historical comparisons run only when requested; consult their explicit statuses. Release Gate evaluates configured deterministic checks.',
         'Packaging metadata is identified by path only; generated content is not verified.',
         'Source-prefix selection defines scope. Files outside that prefix are counted but excluded.',
         'Text excerpts and diffs are bounded previews; SHA-256 hashes cover full inspected contents.',
     ]
+    if source is None:
+        limitations.append('No source baseline is available: added files mean unmatched artifact content; NEW behavior or source integrity cannot be established.')
     limitations.extend(security_notes)
     if not overlap:
         limitations.append('No shared file paths: mapping could be wrong. Investigation is PARTIAL.')
     if any(name.split('/')[0].endswith('.data') for name in artifact):
         limitations.append('Wheel .data installation relocation is not mapped. Investigation is PARTIAL.')
     counts = {kind: sum(d.status == kind for d in differences) for kind in ('added', 'removed', 'modified', 'identical')}
-    return Report(scan_id=scan_id, analysis_status='PARTIAL' if partial else 'COMPLETE',
-        input_artifact=Path(artifact_name).name[:256], artifact_sha256=wheel_sha, source_tree_sha256=source_sha,
+    from .dna import fingerprint
+    from .impact import relationships
+    declared_name, declared_version = wheel_identity(artifact)
+    edges, impact_truncated = relationships(artifact, indicators, metadata_changes)
+    report = Report(package_name=declared_name, package_version=declared_version, impact_relationships=edges, impact_truncated=impact_truncated, release_fingerprint=fingerprint(artifact, indicators, metadata_changes, imports, partial=partial), scan_id=scan_id, analysis_status='PARTIAL' if partial else 'COMPLETE',
+        input_artifact=Path(artifact_name).name[:256], source_resolution='ARTIFACT_ONLY' if source is None else 'LOCAL_USER_MAPPING', artifact_sha256=wheel_sha, source_tree_sha256=source_sha,
         mappings=[Mapping(source_prefix=source_prefix)], file_differences=differences,
         record_status=record.status, record_check=record, behavior_indicators=indicators, metadata_changes=metadata_changes,
         coverage=Coverage(artifact_files=len(artifact), source_files=len(mapped), compared_files=len(differences),
             excluded_source_files=len(original)-len(mapped), byte_limit_per_file=MAX_FILE, **counts),
         findings=findings, evidence=evidence, limitations=limitations)
+
+    from .policy import apply_policy
+    return apply_policy(report)

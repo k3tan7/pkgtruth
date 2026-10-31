@@ -37,3 +37,11 @@ Known generated metadata names and license/SBOM directories are classified as pa
 On top of archive limits, parsers allow 128 KiB per Python/PTH file, 20,000 AST nodes per file, 2,000 reported indicators total, 128 KiB cumulative metadata per side, 256 declared values per side, 128 metadata comparisons and 1,003 RECORD rows. These are cooperative bounds under the existing cumulative 30-second deadline. Oversized/invalid Python or metadata, parser failures and exhausted budgets produce PARTIAL with limitations. Record issues and code-context evidence stay bounded. Production still needs isolated workers with OS resource limits.
 
 Schema 1.1 adds record_check, behavior_indicators and metadata_changes. Existing schema 1.0 reports remain readable with NOT_CHECKED/empty defaults and preserve their original fields on export; stored results are not rerun or upgraded into verified claims. New scan IDs include static-security-2, keeping them distinct from earlier byte-only scans.
+
+## Network, model and historical layers (schema 1.2)
+
+Registry access is approved-host public HTTPS only, with public-address DNS checks, bounded redirects, 2 MiB metadata / 16 MiB artifacts, size/digest verification and no source builds. GitHub release correspondence is unverified; unresolved source produces artifact-only PARTIAL coverage. Wheel identity must match the requested project/version.
+
+Private Ollama is separate from public retrieval. It uses a fixed private endpoint allowlist and pinned digest, bounded context/output, structured schemas and evidence-reference validation. Prompt injection is treated as untrusted package text; validation does not guarantee a model's reasoning correct. Deterministic fields and policy remain unchanged on success or failure.
+
+DNA compares bounded fingerprints against a selected stored/retrieved artifact; first-observed means relative to that baseline only. Impact edges are conditional static relationships. Policies never interpret AI output. Capsules escape package/model text. Watch events describe observed registry metadata changes, not confirmed malicious releases. Worker threads and parser/network deadlines are cooperative; hard sandboxing and public multi-user service security are not implemented.

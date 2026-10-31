@@ -1,6 +1,6 @@
 {
-  "schema_version": "1.1",
-  "tool_version": "0.2.0",
+  "schema_version": "1.2",
+  "tool_version": "0.3.0",
   "rule_version": "static-security-2",
   "scan_id": "a26e9e4fef868f0041f5cc1c33c28c43",
   "analysis_status": "COMPLETE",
@@ -9,6 +9,9 @@
   "artifact_sha256": "ee0c94d8d9b3d3394f532bf27f41eb4f5345721648b97ed4a108a2850d72f37c",
   "source_tree_sha256": "6e23e2147fdd9ad2c363af9c8f650dc3c42cf253c2fb4756f9f6d12a33fe3b45",
   "source_commit": null,
+  "package_name": "demo",
+  "package_version": "1.0",
+  "retrieval": {},
   "mappings": [
     {
       "source_prefix": "",
@@ -241,12 +244,86 @@
       "description": "RECORD consistency VALID: 5 file digests checked. This is not provenance verification.",
       "source_excerpt": null,
       "artifact_excerpt": ""
+    },
+    {
+      "id": "E-P-aa9e8f63720a2b73",
+      "path": "<policy input statuses>",
+      "description": "Deterministic policy input statuses; not authenticated report signing.",
+      "source_excerpt": null,
+      "artifact_excerpt": "{\"analysis_status\": \"COMPLETE\", \"configured_checks\": {\"block_high\": false, \"require_complete\": true, \"require_verified_provenance\": false, \"review_medium\": true}, \"provenance_status\": \"NOT_CHECKED\", \"record_status\": \"VALID\"}"
     }
   ],
+  "release_fingerprint": {
+    "version": "1",
+    "artifact_files": {
+      "demo-1.0.dist-info/METADATA": "34aa27a6064f958b41b781a217f290fd0ab5f9651e2b6e4acdab341b7b93c305",
+      "demo-1.0.dist-info/RECORD": "2a89d235164ca344d0811782ad512aa018e48a75b86bb68aff8b27df9bd76fea",
+      "demo-1.0.dist-info/WHEEL": "205886c1b3281160c3261865e18f8996b352f66ee0f53614262f1504350421db",
+      "demo/__init__.py": "85e97db552d4e230984f6b89188b90b88f75bcf7531e9a7901a391b59fca5fea",
+      "demo/extra.py": "9378fc554e77c80f81a7dd8d216297f1b43e3c2eca98cdc5d83a938ea77ed4d2",
+      "demo/message.py": "18ea86736f65d66258ca5145c3b06ea3d29ea66036ebc01e2d560361a39bf4f9"
+    },
+    "imports": [],
+    "surfaces": [],
+    "declarations": [
+      {
+        "field": "console_scripts",
+        "values": [],
+        "path": "demo-1.0.dist-info/METADATA",
+        "evidence_ids": [
+          "E-b18dced87388d389"
+        ]
+      },
+      {
+        "field": "dependencies",
+        "values": [],
+        "path": "demo-1.0.dist-info/METADATA",
+        "evidence_ids": [
+          "E-b18dced87388d389"
+        ]
+      },
+      {
+        "field": "gui_scripts",
+        "values": [],
+        "path": "demo-1.0.dist-info/METADATA",
+        "evidence_ids": [
+          "E-b18dced87388d389"
+        ]
+      }
+    ],
+    "coverage_limited": false
+  },
+  "impact_truncated": false,
+  "impact_relationships": [],
+  "dna_baseline": {},
   "historical_anomalies": [],
   "model_status": "NOT_CONFIGURED",
+  "model_details": {},
   "ai_assessments": [],
-  "policy_decision": null,
+  "policy_decision": {
+    "decision": "REVIEW",
+    "reasons": [
+      {
+        "rule": "MEDIUM_FINDINGS",
+        "explanation": "Configured checks require review of unexplained differences or capabilities.",
+        "finding_ids": [
+          "F-990c854162472d40",
+          "F-7be508c51f2bde21"
+        ],
+        "evidence_ids": [
+          "E-990c854162472d40",
+          "E-7be508c51f2bde21"
+        ]
+      }
+    ],
+    "config": {
+      "require_complete": true,
+      "review_medium": true,
+      "block_high": false,
+      "require_verified_provenance": false
+    },
+    "limitation": "Evaluates supplied report facts under configured checks, not authenticity, safety, signatures or runtime behavior."
+  },
   "limitations": [
     "Local user-selected source is not authenticated and is not tied to a repository commit.",
     "Static inspection only: no target code was executed. Matching files do not prove safety.",
@@ -254,7 +331,7 @@
     "Static Python rules are syntactic: aliases, local modules, shadowing, indirect calls, runtime code and reachability are not resolved.",
     "Python, PTH and metadata parsing is limited to 128 KiB per file and 20,000 AST nodes. Unparsed files make analysis PARTIAL.",
     "Source metadata outside the selected prefix is not used; missing or dynamic declarations leave metadata comparisons UNKNOWN.",
-    "Provenance, AI, historical analysis and release policies are not checked.",
+    "Provenance is not authenticated. AI and historical comparisons run only when requested; consult their explicit statuses. Release Gate evaluates configured deterministic checks.",
     "Packaging metadata is identified by path only; generated content is not verified.",
     "Source-prefix selection defines scope. Files outside that prefix are counted but excluded.",
     "Text excerpts and diffs are bounded previews; SHA-256 hashes cover full inspected contents.",

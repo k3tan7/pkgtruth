@@ -855,3 +855,12 @@ footer {
     font-size:27px;
   }
 }
+/* Bounded controls and relationship rows also fit narrow investigation views. */
+select { max-width: 100%; }
+.finding { flex-wrap: wrap; }
+.finding code { min-width: 0; }
+.panel form { margin: 14px 0; }
+@media(max-width:760px) {
+  aside { flex-wrap: wrap; gap: 8px; }
+  nav { flex-wrap: wrap; flex-basis: 100%; }
+}

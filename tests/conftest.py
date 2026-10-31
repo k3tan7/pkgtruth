@@ -10,7 +10,9 @@ def make_zip(files):
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
         for path, value in files.items():
-            archive.writestr(path, value)
+            # Fixed ZIP timestamps keep artifact identity independent of wall-clock ticks.
+            entry = zipfile.ZipInfo(path, date_time=(2026, 1, 1, 0, 0, 0))
+            archive.writestr(entry, value, compress_type=zipfile.ZIP_DEFLATED)
     return buffer.getvalue()
 
 

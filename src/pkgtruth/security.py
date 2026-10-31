@@ -127,7 +127,7 @@ def decode_python(data: bytes) -> str:
     return data.decode(encoding)
 
 
-def features(path: str, data: bytes, deadline) -> dict[tuple[str, str], tuple[int, str]]:
+def features(path: str, data: bytes, deadline, imports=None) -> dict[tuple[str, str], tuple[int, str]]:
     """Return syntactic indicators, keyed without line numbers to tolerate line moves."""
     result = {}
     logical = logical_path(path)
@@ -160,10 +160,24 @@ def features(path: str, data: bytes, deadline) -> dict[tuple[str, str], tuple[in
         if len(nodes) % 256 == 0:
             deadline()
         nodes.append(node)
+        if imports is not None and len(imports) > 2000:
+            retained = sorted(imports)[:2000]
+            imports.clear()
+            imports.update(retained)
+            raise ValueError('Import inventory limit exceeded')
         if isinstance(node, ast.Import):
+            if imports is not None:
+                imports.update(alias.name for alias in node.names)
             for alias in node.names:
                 aliases[alias.asname or alias.name.split('.')[0]] = alias.name if alias.asname else alias.name.split('.')[0]
-        elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+        elif isinstance(node, ast.ImportFrom):
+            if imports is not None:
+                if node.module:
+                    imports.add('.' * node.level + node.module)
+                else:
+                    imports.update('.' * node.level + alias.name for alias in node.names)
+            if node.level or not node.module:
+                continue
             for alias in node.names:
                 if alias.name != '*':
                     aliases[alias.asname or alias.name] = node.module + '.' + alias.name
@@ -264,7 +278,7 @@ def declarations(files: dict[str, bytes], deadline):
     return values
 
 
-def inspect_security(artifact, source, differences, evidence, findings, deadline):
+def inspect_security(artifact, source, differences, evidence, findings, deadline, *, source_available=True):
     record = validate_record(artifact)
     record_id = 'E-R-' + identity([record.model_dump(), [(p, hashlib.sha256(v).hexdigest()) for p, v in sorted(artifact.items())]])
     evidence.append(Evidence(id=record_id, path=record.path or '<wheel inventory>',
@@ -275,6 +289,7 @@ def inspect_security(artifact, source, differences, evidence, findings, deadline
             severity='HIGH' if record.status == 'INVALID' else 'MEDIUM', evidence_ids=[record_id],
             explanation=f'Wheel RECORD is {record.status}. Inspect the consistency issues; no publisher authenticity is established.'))
     indicators, changes, notes = [], [], []
+    imports = {'artifact': set(), 'source': set()}
     partial = record.status != 'VALID'
     for path in sorted(artifact.keys() | source.keys()):
         deadline()
@@ -285,7 +300,7 @@ def inspect_security(artifact, source, differences, evidence, findings, deadline
         sides = []
         for label, files in [('artifact', artifact), ('source', source)]:
             try:
-                sides.append(features(path, files[path], deadline) if path in files else {})
+                sides.append(features(path, files[path], deadline, imports[label]) if path in files else {})
             except InputError:
                 raise
             except (SyntaxError, UnicodeError, ValueError, RecursionError, MemoryError) as exc:
@@ -301,7 +316,7 @@ def inspect_security(artifact, source, differences, evidence, findings, deadline
                 break
             current = (published or {}).get((kind, symbol))
             previous = (reviewed or {}).get((kind, symbol))
-            relation = 'UNKNOWN' if published is None or reviewed is None else 'PRESENT' if current and previous else 'NEW' if current else 'SOURCE_ONLY'
+            relation = 'UNKNOWN' if not source_available or published is None or reviewed is None else 'PRESENT' if current and previous else 'NEW' if current else 'SOURCE_ONLY'
             line, explanation = current or previous
             key = identity([kind, path, symbol, relation, hashlib.sha256(artifact.get(path, b'')).hexdigest(), hashlib.sha256(source.get(path, b'')).hexdigest()])
             eid = 'E-S-' + key
@@ -348,4 +363,18 @@ def inspect_security(artifact, source, differences, evidence, findings, deadline
                 severity='MEDIUM', evidence_ids=refs, explanation=f'{field} declarations in {path}: {relation}. Declarative metadata is not proof of installation or execution.'))
     if published and not reviewed:
         notes.append('No in-scope source metadata baseline: dependency/entry-point changes cannot be established. Choose a source root containing static project metadata to compare declarations.')
-    return record, indicators, changes, partial, notes
+    return record, indicators, changes, partial, notes, imports['artifact']
+
+
+def wheel_identity(files):
+    paths=[p for p in files if len(p.split('/'))==2 and p.endswith('.dist-info/METADATA')]
+    if len(paths)!=1 or len(files[paths[0]])>MAX_PARSE:
+        return None,None
+    try:
+        metadata=BytesParser(policy=policy.default).parsebytes(files[paths[0]],headersonly=True)
+        if metadata.defects or any(len(metadata.get_all(k,[]))!=1 for k in ('Name','Version')):
+            return None,None
+        name,version=str(metadata['Name']).strip(),str(metadata['Version']).strip()
+        return (name,version) if name and version and max(len(name),len(version))<=100 else (None,None)
+    except (ValueError,UnicodeError):
+        return None,None

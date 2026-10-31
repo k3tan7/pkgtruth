@@ -35,3 +35,21 @@ window.addEventListener('pageshow', () => {
     form.removeAttribute('aria-busy');
   }
 });
+const jobStatus = document.querySelector('#job-status');
+if (jobStatus) {
+  const poll = async () => {
+    try {
+      const response = await fetch(`/jobs/${jobStatus.dataset.jobId}/status`, {cache: 'no-store'});
+      if (!response.ok) throw new Error('Job status could not be retrieved. Reload to retry.');
+      const job = await response.json();
+      document.querySelector('#job-state').textContent = job.status;
+      document.querySelector('#job-error').textContent = job.error || '';
+      if (job.status === 'COMPLETE' && /^[a-f0-9]{32}$/.test(job.scan_id)) {
+        window.location.assign(`/scans/${job.scan_id}`);
+      } else if (['QUEUED', 'RUNNING'].includes(job.status)) {
+        window.setTimeout(poll, 2000);
+      }
+    } catch (error) { document.querySelector('#job-error').textContent = error.message; }
+  };
+  poll();
+}

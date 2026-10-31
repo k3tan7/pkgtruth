@@ -1,0 +1,9 @@
+{% extends 'base.html' %}{% block title %}PyPI investigation · pkgtruth{% endblock %}{% block content %}
+<div class="eyebrow">EXACT RELEASE / PUBLIC REGISTRY</div><h1>Investigate PyPI.</h1>
+<p class="subtitle">Choose a real package and exact version. Wheels are inspected without installation.</p>
+{% if error %}<div class="error" role="alert">{{ error }}</div>{% endif %}
+<form method="get" action="/packages" class="panel"><label for="package-name">Exact package name</label><input id="package-name" name="name" type="text" maxlength="100" required value="{{ project.name if project else '' }}" placeholder="idna"><button class="button" type="submit">Find versions</button></form>
+{% if project %}<section class="panel"><h2>{{ project.name }}</h2><p>{{ project.summary }}</p>
+<form method="post" action="/jobs/pypi" id="scan-form"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="name" value="{{ project.name }}"><label for="release-version">Exact version</label><select id="release-version" name="version" required>{% for version in project.versions %}<option value="{{ version }}" {% if version == project.latest %}selected{% endif %}>{{ version }}</option>{% endfor %}</select><button class="button" type="submit" id="submit-scan">Investigate release ↗</button><div id="scan-progress" role="status" hidden>Retrieving and inspecting the exact release…</div></form></section>{% endif %}
+<div class="note">Only approved public HTTPS hosts are contacted. Artifact digest and size must match PyPI. Exact GitHub release tags are treated as unverified source claims. Unresolved source yields an explicit PARTIAL artifact-only report; source distributions are never built.</div>
+{% endblock %}

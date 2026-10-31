@@ -7,15 +7,17 @@
 <p class="subtitle">Explicit source mapping · <code>{{ report.mappings[0].source_prefix or '(root)' }}</code>
 </p>
 </div>
-<a class="button secondary" href="/scans/{{ report.scan_id }}/report.json">↓ Export JSON</a>
+<a class="button secondary" href="/scans/{{ report.scan_id }}/report.json">↓ Export JSON</a><a class="button secondary" href="/scans/{{ report.scan_id }}/report.html">↓ Proof Capsule HTML</a>
 </div>
 {% set high_count = report.findings|selectattr('severity', 'equalto', 'HIGH')|list|length %}
 {% set medium_count = report.findings|selectattr('severity', 'equalto', 'MEDIUM')|list|length %}
+{% if report.retrieval %}<section class="panel"><h2>{{ report.package_name }} / {{ report.package_version }}</h2><p>Registry digest verified: {{ report.retrieval.registry_digest_verified }}. Source correspondence: {{ report.retrieval.source_correspondence }}.</p><p>Claimed source: <code>{{ report.retrieval.claimed_repository or 'UNRESOLVED' }}</code></p><p>Resolved revision: <code>{{ report.source_commit or 'UNRESOLVED' }}</code>. Matching tags are unverified claims, not authenticated provenance.</p></section>{% endif %}
+{% if report.source_resolution == 'ARTIFACT_ONLY' %}<div class="error">Source correspondence is unresolved. Files are unmatched artifact content; differences and new behavior relative to source cannot be established.</div>{% endif %}
 <section class="verdict">
 <span class="badge {{ 'warn' if report.analysis_status == 'PARTIAL' or high_count else '' }}">Coverage: {{ report.analysis_status }}</span>
 <h2>{{ 'Coverage needs review' if report.analysis_status == 'PARTIAL' else 'Inspect these findings' if high_count or medium_count else 'Inspection finished' }}</h2>
 <p>{{ high_count }} HIGH / {{ medium_count }} MEDIUM · {{ report.findings|length }} findings recorded. Static indicators and content changes do not establish malicious activity.</p>
-<small>Provenance: NOT_CHECKED &nbsp; / &nbsp; RECORD: {{ report.record_status }} &nbsp; / &nbsp; AI: NOT_CONFIGURED</small>
+<small>Provenance: NOT_CHECKED &nbsp; / &nbsp; RECORD: {{ report.record_status }} &nbsp; / &nbsp; AI: {{ report.model_status }}</small>
 </section>
 <section class="panel">
 <h2>Wheel RECORD consistency <span class="badge {{ 'warn' if report.record_status != 'VALID' else '' }}">{{ report.record_status }}</span></h2>
@@ -38,6 +40,18 @@
 <p>Artifact:</p><pre class="diff">{{ change.artifact_values|join('\n') or '(none declared)' }}</pre><p>Evidence: {{ change.evidence_ids|join(', ') }}</p></details>
 {% else %}<p>No supported distribution metadata declarations found.</p>{% endfor %}
 </section>
+<section class="panel"><h2>Local AI investigator <span class="badge">{{ report.model_status }}</span></h2><p>Qwen explanations are unverified interpretations. Validation covers JSON and supplied evidence IDs, not factual correctness. Deterministic hashes, findings and policy results are preserved.</p>
+{% if report.model_details.error %}<div class="error">{{ report.model_details.error }}</div>{% endif %}
+{% for assessment in report.ai_assessments %}<h3>{{ assessment.explanation }}</h3><p><strong>Legitimate explanation:</strong> {{ assessment.legitimate_explanation }}</p><p><strong>Security concern:</strong> {{ assessment.security_concern }}</p><p><strong>Uncertainty:</strong> {{ assessment.uncertainty }}</p><ul>{% for check in assessment.next_checks %}<li>{{ check }}</li>{% endfor %}</ul><p>Evidence: {{ assessment.evidence_ids|join(', ') }}</p>{% endfor %}
+{% if report.model_details.digest %}<p>Model <code>{{ report.model_details.model }}</code> · digest <code>{{ report.model_details.digest }}</code> · {{ report.model_details.license }}</p>{% endif %}
+<form action="/jobs/ai" method="post"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="scan_id" value="{{ report.scan_id }}"><button class="button secondary" type="submit">Investigate with local Qwen</button></form></section>
+<section class="panel"><h2>Release DNA</h2><p>Deterministic historical comparison. First observed means relative to the selected inspected baseline; it is not trained ML or proof of execution.</p>
+{% if baselines %}<form method="post" action="/scans/{{ report.scan_id }}/dna"><input type="hidden" name="csrf" value="{{ csrf }}"><label for="baseline">Earlier release</label><select id="baseline" name="baseline">{% for item in baselines %}<option value="{{ item.scan_id }}">{{ item.package_name or item.input_artifact }} {{ item.package_version or item.scan_id[:8] }}</option>{% endfor %}</select><button class="button secondary" type="submit">Compare releases</button></form>{% endif %}
+{% if report.dna_baseline %}<p>Baseline <code>{{ report.dna_baseline.scan_id }}</code> → current <code>{{ report.scan_id }}</code> · coverage limited: {{ report.dna_baseline.coverage_limited }}</p>{% endif %}
+{% for item in report.historical_anomalies %}<details><summary><span class="badge {{ 'warn' if item.severity != 'INFORMATIONAL' else '' }}">{{ item.severity }}</span> {{ item.kind }} · <code>{{ item.path }}</code></summary><p>{{ item.explanation }}</p><pre class="diff">Previous: {{ item.previous }}
+Current: {{ item.current }}</pre><p>Evidence: {{ item.evidence_ids|join(', ') }}</p></details>{% else %}<p>No historical comparison recorded.</p>{% endfor %}</section>
+{% if report.policy_decision %}<section class="panel"><h2>Release Gate <span class="badge {{ 'warn' if report.policy_decision.decision != 'ALLOW' else '' }}">{{ report.policy_decision.decision }}</span></h2><p>{{ report.policy_decision.limitation }}</p>{% for reason in report.policy_decision.reasons %}<details><summary>{{ reason.rule }}</summary><p>{{ reason.explanation }}</p><p>Evidence: {{ reason.evidence_ids|join(', ') }}</p></details>{% endfor %}<a class="text-link" href="/policy">Configure future scan policies →</a></section>{% endif %}
+{% if report.impact_relationships %}<section class="panel"><h2>Static impact relationships</h2>{% if report.impact_truncated %}<p class="note">Relationship preview truncated at its edge limit. Full inspected findings remain in the report.</p>{% endif %}<p>Conditional declarations and syntactic containment only. These arrows do not establish runtime execution paths.</p>{% for edge in report.impact_relationships %}<div class="finding"><code>{{ edge.origin }}</code><span>— {{ edge.relationship }} →</span><code>{{ edge.target }}</code></div>{% endfor %}</section>{% endif %}
 <div class="metrics">{% for name in ['identical','modified','added','removed'] %}<div class="metric">
 <span>{{ name|upper }}</span>
 <strong class="{{ 'accent' if name == 'identical' else '' }}">{{ report.coverage|attr(name) }}</strong>
