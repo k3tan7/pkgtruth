@@ -30,6 +30,11 @@ def parser() -> argparse.ArgumentParser:
     remote.add_argument('--json', action='store_true')
     remote.add_argument('--ai', action='store_true')
     remote.add_argument('--output', type=Path)
+    dna = commands.add_parser('dna', help='Compare two stored scans or two exact PyPI releases')
+    dna.add_argument('package', nargs='?')
+    dna.add_argument('--previous', required=True, help='Previous scan ID, or exact version with a package name')
+    dna.add_argument('--current', required=True, help='Current scan ID, or exact version with a package name')
+    dna.add_argument('--json', action='store_true')
     ai = commands.add_parser('investigate', help='Explain a stored scan using pinned local Qwen')
     ai.add_argument('scan_id')
     ai.add_argument('--json', action='store_true')
@@ -65,6 +70,20 @@ def main(argv: list[str] | None = None) -> int:
             uvicorn.run('pkgtruth.web:app', host='127.0.0.1', port=args.port)
             return 0
         store = ReportStore()
+        if args.command == 'dna':
+            from .dna import compare_releases
+            if args.package:
+                from .pypi import scan_pypi
+                previous, current = scan_pypi(args.package, args.previous), scan_pypi(args.package, args.current)
+                store.save(previous)
+            else:
+                previous, current = store.get(args.previous), store.get(args.current)
+            if previous is None or current is None:
+                raise InputError('Both baseline and current reports must exist')
+            report = compare_releases(previous, current)
+            store.save(report)
+            print(report.model_dump_json(indent=2) if args.json else render(report) + '\n' + '\n'.join(f"DNA {a['severity']}: {a['kind']} {a['path']}" for a in report.historical_anomalies))
+            return 1 if any(a['severity'] != 'INFORMATIONAL' for a in report.historical_anomalies) else 0
         if args.command == 'investigate':
             from .investigator import investigate
             original = store.get(args.scan_id)

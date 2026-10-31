@@ -632,6 +632,16 @@
       "title": "Evidence",
       "type": "array"
     },
+    "release_fingerprint": {
+      "additionalProperties": true,
+      "title": "Release Fingerprint",
+      "type": "object"
+    },
+    "dna_baseline": {
+      "additionalProperties": true,
+      "title": "Dna Baseline",
+      "type": "object"
+    },
     "historical_anomalies": {
       "items": {
         "additionalProperties": true,

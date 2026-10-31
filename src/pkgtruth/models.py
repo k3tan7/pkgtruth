@@ -111,6 +111,8 @@ class Report(StrictModel):
     coverage: Coverage
     findings: list[Finding]
     evidence: list[Evidence]
+    release_fingerprint: dict = Field(default_factory=dict)
+    dna_baseline: dict = Field(default_factory=dict)
     historical_anomalies: list[dict] = Field(default_factory=list)
     model_status: Literal['NOT_CONFIGURED', 'VALIDATED', 'REJECTED', 'UNAVAILABLE'] = 'NOT_CONFIGURED'
     model_details: dict = Field(default_factory=dict)
@@ -123,7 +125,7 @@ class Report(StrictModel):
     def serialize_report(self, handler):
         data = handler(self)
         if self.schema_version in ('1.0', '1.1'):
-            for field in ('package_name', 'package_version', 'retrieval', 'model_details'):
+            for field in ('package_name', 'package_version', 'retrieval', 'model_details', 'release_fingerprint', 'dna_baseline'):
                 data.pop(field, None)
         if self.schema_version == '1.0':
             # Preserve the strict original wire format when re-exporting stored reports.

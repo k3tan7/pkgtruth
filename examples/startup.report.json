@@ -370,6 +370,70 @@
       "artifact_excerpt": "import demo; demo.VALUE = 2"
     }
   ],
+  "release_fingerprint": {
+    "version": "1",
+    "artifact_files": {
+      "demo-1.0.dist-info/METADATA": "34aa27a6064f958b41b781a217f290fd0ab5f9651e2b6e4acdab341b7b93c305",
+      "demo-1.0.dist-info/RECORD": "a301d56bb5e6a8818084bd12ab164ed18ae7e3c4dbd3a7515f2f522b81b46457",
+      "demo-1.0.dist-info/WHEEL": "205886c1b3281160c3261865e18f8996b352f66ee0f53614262f1504350421db",
+      "demo-1.0.dist-info/entry_points.txt": "bb40104e363e38ebf90d1d73410b8a67aef44aecbf98e2fb1d1bd07a4f96a46a",
+      "demo/__init__.py": "85e97db552d4e230984f6b89188b90b88f75bcf7531e9a7901a391b59fca5fea",
+      "demo/extra.py": "9378fc554e77c80f81a7dd8d216297f1b43e3c2eca98cdc5d83a938ea77ed4d2",
+      "demo/message.py": "d695345d263e04b23d5fd331fed6c163e02c9341546da3aa7b8caf344070a0e3",
+      "startup.pth": "5d5c5c5936a18e6a733e93a66f240a5f54e2605e93bc14a92cd7311fdbfdaad4"
+    },
+    "imports": [
+      "socket"
+    ],
+    "surfaces": [
+      {
+        "kind": "NETWORK_CAPABILITY",
+        "path": "demo/message.py",
+        "symbol": "import: socket",
+        "evidence_ids": [
+          "E-S-49b99f97739f9294"
+        ]
+      },
+      {
+        "kind": "PTH_EXECUTION",
+        "path": "startup.pth",
+        "symbol": "import demo; demo.VALUE = 2",
+        "evidence_ids": [
+          "E-S-3c075a4785b6aefd"
+        ]
+      }
+    ],
+    "declarations": [
+      {
+        "field": "dependencies",
+        "values": [],
+        "path": "demo-1.0.dist-info/METADATA",
+        "evidence_ids": [
+          "E-b18dced87388d389"
+        ]
+      },
+      {
+        "field": "console_scripts",
+        "values": [
+          "demo = demo.message:message"
+        ],
+        "path": "demo-1.0.dist-info/entry_points.txt",
+        "evidence_ids": [
+          "E-9d839cc01c056d2d"
+        ]
+      },
+      {
+        "field": "gui_scripts",
+        "values": [],
+        "path": "demo-1.0.dist-info/entry_points.txt",
+        "evidence_ids": [
+          "E-9d839cc01c056d2d"
+        ]
+      }
+    ],
+    "coverage_limited": false
+  },
+  "dna_baseline": {},
   "historical_anomalies": [],
   "model_status": "NOT_CONFIGURED",
   "model_details": {},

@@ -84,7 +84,7 @@ def analyze(wheel: bytes, source: bytes | Path | None, *, artifact_name: str = '
                 explanation=(f'{path}: source-only packaging configuration, commonly omitted from a wheel. No build was run; omission legitimacy is not verified.' if configuration else
                              f'{path}: {status}. Wheel packaging metadata can be generated; its legitimacy is not verified.' if metadata else
                              f'{path}: {status} relative to the selected source root. Review the difference; it does not establish malicious behavior.')))
-    record, indicators, metadata_changes, security_partial, security_notes = inspect_security(artifact, mapped, differences, evidence, findings, deadline, source_available=source is not None)
+    record, indicators, metadata_changes, security_partial, security_notes, imports = inspect_security(artifact, mapped, differences, evidence, findings, deadline, source_available=source is not None)
     deadline()
     overlap = sum(d.status in ('modified', 'identical') for d in differences)
     partial = security_partial or not overlap or any(name.split('/')[0].endswith('.data') for name in artifact)
@@ -108,7 +108,8 @@ def analyze(wheel: bytes, source: bytes | Path | None, *, artifact_name: str = '
     if any(name.split('/')[0].endswith('.data') for name in artifact):
         limitations.append('Wheel .data installation relocation is not mapped. Investigation is PARTIAL.')
     counts = {kind: sum(d.status == kind for d in differences) for kind in ('added', 'removed', 'modified', 'identical')}
-    return Report(scan_id=scan_id, analysis_status='PARTIAL' if partial else 'COMPLETE',
+    from .dna import fingerprint
+    return Report(release_fingerprint=fingerprint(artifact, indicators, metadata_changes, imports, partial=partial), scan_id=scan_id, analysis_status='PARTIAL' if partial else 'COMPLETE',
         input_artifact=Path(artifact_name).name[:256], source_resolution='ARTIFACT_ONLY' if source is None else 'LOCAL_USER_MAPPING', artifact_sha256=wheel_sha, source_tree_sha256=source_sha,
         mappings=[Mapping(source_prefix=source_prefix)], file_differences=differences,
         record_status=record.status, record_check=record, behavior_indicators=indicators, metadata_changes=metadata_changes,

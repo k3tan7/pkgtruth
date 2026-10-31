@@ -209,6 +209,46 @@
       "artifact_excerpt": ""
     }
   ],
+  "release_fingerprint": {
+    "version": "1",
+    "artifact_files": {
+      "demo-1.0.dist-info/METADATA": "34aa27a6064f958b41b781a217f290fd0ab5f9651e2b6e4acdab341b7b93c305",
+      "demo-1.0.dist-info/RECORD": "650e0e0960d972ce4599b6212a3543cbc3826bfe8ed9f1481cf5b56345c94832",
+      "demo-1.0.dist-info/WHEEL": "205886c1b3281160c3261865e18f8996b352f66ee0f53614262f1504350421db",
+      "demo/__init__.py": "85e97db552d4e230984f6b89188b90b88f75bcf7531e9a7901a391b59fca5fea",
+      "demo/message.py": "f5443387c1e73b533b8e55700403d19fe4a2e7e6a707191e26fa45184b1e33eb"
+    },
+    "imports": [],
+    "surfaces": [],
+    "declarations": [
+      {
+        "field": "console_scripts",
+        "values": [],
+        "path": "demo-1.0.dist-info/METADATA",
+        "evidence_ids": [
+          "E-b18dced87388d389"
+        ]
+      },
+      {
+        "field": "dependencies",
+        "values": [],
+        "path": "demo-1.0.dist-info/METADATA",
+        "evidence_ids": [
+          "E-b18dced87388d389"
+        ]
+      },
+      {
+        "field": "gui_scripts",
+        "values": [],
+        "path": "demo-1.0.dist-info/METADATA",
+        "evidence_ids": [
+          "E-b18dced87388d389"
+        ]
+      }
+    ],
+    "coverage_limited": false
+  },
+  "dna_baseline": {},
   "historical_anomalies": [],
   "model_status": "NOT_CONFIGURED",
   "model_details": {},

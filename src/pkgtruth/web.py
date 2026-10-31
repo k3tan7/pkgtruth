@@ -178,6 +178,23 @@ def create_app(store: ReportStore | None = None) -> FastAPI:
                     return response
         return RedirectResponse(f'/scans/{report.scan_id}', status_code=303)
 
+    @app.post('/scans/{scan_id}/dna')
+    async def dna_comparison(request: Request, scan_id: str):
+        from .dna import compare_releases
+        if request.headers.get('origin') not in (None, str(request.base_url).rstrip('/')):
+            raise HTTPException(403, 'Cross-origin request forbidden')
+        async with request.form(max_files=0, max_fields=2, max_part_size=2048) as form:
+            token, cookie = form.get('csrf'), request.cookies.get('csrf')
+            if not isinstance(token, str) or not cookie or not hmac.compare_digest(token.encode(), cookie.encode()):
+                raise HTTPException(403, 'Invalid form token')
+            baseline = lookup(str(form.get('baseline', '')))
+        try:
+            report = await run_in_threadpool(compare_releases, baseline, lookup(scan_id))
+        except InputError as exc:
+            raise HTTPException(422, str(exc)) from exc
+        await run_in_threadpool(reports.save, report)
+        return RedirectResponse(f'/scans/{scan_id}', status_code=303)
+
     @app.post('/scans/{scan_id}/investigate')
     async def ai_investigation(request: Request, scan_id: str):
         from .investigator import investigate
@@ -205,7 +222,7 @@ def create_app(store: ReportStore | None = None) -> FastAPI:
     @app.get('/scans/{scan_id}', response_class=HTMLResponse)
     def result(request: Request, scan_id: str):
         report = lookup(scan_id)
-        return page(request, 'result.html', report=report, evidence_lookup={item.id: item for item in report.evidence})
+        return page(request, 'result.html', report=report, evidence_lookup={item.id: item for item in report.evidence}, baselines=[r for r in reports.recent() if r.scan_id != scan_id and r.release_fingerprint])
 
     @app.get('/scans/{scan_id}/report.json')
     def export(scan_id: str):
