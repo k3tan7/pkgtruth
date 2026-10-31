@@ -14,5 +14,6 @@ Problem 4: Published Package vs Source Code Integrity Analyzer
 - Observed digest: `7f3251fa6878a78a606bcb3c074283306e5ad2ea411a7774a9dd98a4bc7f2d13`. Local metadata reports Apache-2.0; license-text SHA-256 `5f3a3c817e78f5b8a4ad2d2c458a3e4b2cce470d6c12642c4eeb12cb8a9bf51d`. Tested requested settings: 4096 context, 1024 output tokens, temperature 0, thinking disabled. First real generation: 812 prompt tokens, 397 output tokens, approximately 19.58 seconds.
 
 ## AI coding assistants
-- ChatGPT (repository setup and earlier debugging assistance).
-- Codex (milestones 1 and 2 plus consolidated integration implementation, tests and documentation).
+- ChatGPT (including Astra Ultra): planning, debugging, report presentation, and development guidance.
+- OpenAI Codex: feature implementation, integration, tests, and documentation.
+- Google Gemini Argon: frontend redesign and report presentation improvements.
