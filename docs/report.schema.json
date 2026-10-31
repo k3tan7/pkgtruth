@@ -1,0 +1,420 @@
+{
+  "$defs": {
+    "Coverage": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_files": {
+          "title": "Artifact Files",
+          "type": "integer"
+        },
+        "source_files": {
+          "title": "Source Files",
+          "type": "integer"
+        },
+        "compared_files": {
+          "title": "Compared Files",
+          "type": "integer"
+        },
+        "identical": {
+          "title": "Identical",
+          "type": "integer"
+        },
+        "added": {
+          "title": "Added",
+          "type": "integer"
+        },
+        "removed": {
+          "title": "Removed",
+          "type": "integer"
+        },
+        "modified": {
+          "title": "Modified",
+          "type": "integer"
+        },
+        "excluded_source_files": {
+          "title": "Excluded Source Files",
+          "type": "integer"
+        },
+        "byte_limit_per_file": {
+          "title": "Byte Limit Per File",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "artifact_files",
+        "source_files",
+        "compared_files",
+        "identical",
+        "added",
+        "removed",
+        "modified",
+        "excluded_source_files",
+        "byte_limit_per_file"
+      ],
+      "title": "Coverage",
+      "type": "object"
+    },
+    "Difference": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "title": "Path",
+          "type": "string"
+        },
+        "source_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Source Path"
+        },
+        "status": {
+          "enum": [
+            "added",
+            "removed",
+            "modified",
+            "identical"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "artifact_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Artifact Sha256"
+        },
+        "source_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Source Sha256"
+        },
+        "classification": {
+          "enum": [
+            "packaging_metadata",
+            "unexplained",
+            "identical"
+          ],
+          "title": "Classification",
+          "type": "string"
+        },
+        "evidence_id": {
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "binary": {
+          "default": false,
+          "title": "Binary",
+          "type": "boolean"
+        },
+        "diff": {
+          "default": "",
+          "title": "Diff",
+          "type": "string"
+        },
+        "excerpt_truncated": {
+          "default": false,
+          "title": "Excerpt Truncated",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "path",
+        "source_path",
+        "status",
+        "artifact_sha256",
+        "source_sha256",
+        "classification",
+        "evidence_id"
+      ],
+      "title": "Difference",
+      "type": "object"
+    },
+    "Evidence": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "path": {
+          "title": "Path",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "source_excerpt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Excerpt"
+        },
+        "artifact_excerpt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Artifact Excerpt"
+        }
+      },
+      "required": [
+        "id",
+        "path",
+        "description"
+      ],
+      "title": "Evidence",
+      "type": "object"
+    },
+    "Finding": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "rule": {
+          "title": "Rule",
+          "type": "string"
+        },
+        "severity": {
+          "enum": [
+            "HIGH",
+            "MEDIUM",
+            "INFORMATIONAL"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "explanation": {
+          "title": "Explanation",
+          "type": "string"
+        },
+        "evidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "rule",
+        "severity",
+        "explanation",
+        "evidence_ids"
+      ],
+      "title": "Finding",
+      "type": "object"
+    },
+    "Mapping": {
+      "additionalProperties": false,
+      "properties": {
+        "source_prefix": {
+          "title": "Source Prefix",
+          "type": "string"
+        },
+        "artifact_prefix": {
+          "default": "",
+          "title": "Artifact Prefix",
+          "type": "string"
+        },
+        "method": {
+          "const": "explicit_relative_path",
+          "default": "explicit_relative_path",
+          "title": "Method",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_prefix"
+      ],
+      "title": "Mapping",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "tool_version": {
+      "default": "0.1.0",
+      "title": "Tool Version",
+      "type": "string"
+    },
+    "rule_version": {
+      "default": "local-comparison-1",
+      "title": "Rule Version",
+      "type": "string"
+    },
+    "scan_id": {
+      "pattern": "^[a-f0-9]{32}$",
+      "title": "Scan Id",
+      "type": "string"
+    },
+    "analysis_status": {
+      "enum": [
+        "COMPLETE",
+        "PARTIAL",
+        "REJECTED"
+      ],
+      "title": "Analysis Status",
+      "type": "string"
+    },
+    "input_artifact": {
+      "title": "Input Artifact",
+      "type": "string"
+    },
+    "source_resolution": {
+      "const": "LOCAL_USER_MAPPING",
+      "default": "LOCAL_USER_MAPPING",
+      "title": "Source Resolution",
+      "type": "string"
+    },
+    "artifact_sha256": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Artifact Sha256",
+      "type": "string"
+    },
+    "source_tree_sha256": {
+      "title": "Source Tree Sha256",
+      "type": "string"
+    },
+    "source_commit": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Source Commit"
+    },
+    "mappings": {
+      "items": {
+        "$ref": "#/$defs/Mapping"
+      },
+      "title": "Mappings",
+      "type": "array"
+    },
+    "file_differences": {
+      "items": {
+        "$ref": "#/$defs/Difference"
+      },
+      "title": "File Differences",
+      "type": "array"
+    },
+    "record_status": {
+      "const": "NOT_CHECKED",
+      "default": "NOT_CHECKED",
+      "title": "Record Status",
+      "type": "string"
+    },
+    "provenance_status": {
+      "const": "NOT_CHECKED",
+      "default": "NOT_CHECKED",
+      "title": "Provenance Status",
+      "type": "string"
+    },
+    "coverage": {
+      "$ref": "#/$defs/Coverage"
+    },
+    "findings": {
+      "items": {
+        "$ref": "#/$defs/Finding"
+      },
+      "title": "Findings",
+      "type": "array"
+    },
+    "evidence": {
+      "items": {
+        "$ref": "#/$defs/Evidence"
+      },
+      "title": "Evidence",
+      "type": "array"
+    },
+    "historical_anomalies": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Historical Anomalies",
+      "type": "array"
+    },
+    "model_status": {
+      "const": "NOT_CONFIGURED",
+      "default": "NOT_CONFIGURED",
+      "title": "Model Status",
+      "type": "string"
+    },
+    "ai_assessments": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Ai Assessments",
+      "type": "array"
+    },
+    "policy_decision": {
+      "default": null,
+      "title": "Policy Decision",
+      "type": "null"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Limitations",
+      "type": "array"
+    }
+  },
+  "required": [
+    "scan_id",
+    "analysis_status",
+    "input_artifact",
+    "artifact_sha256",
+    "source_tree_sha256",
+    "mappings",
+    "file_differences",
+    "coverage",
+    "findings",
+    "evidence",
+    "limitations"
+  ],
+  "title": "Report",
+  "type": "object"
+}
