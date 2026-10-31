@@ -26,30 +26,31 @@ Implemented and locally verified: 112 passing tests on Python 3.12.15 (installed
 - Narrow generated-metadata classification, explicit parser limits and partial coverage.
 - Shared CLI/web reports, RECORD/impact/metadata panels, schema 1.1 with legacy reading, offline security/false-positive regressions.
 
-Acceptance met in offline fixtures and shared CLI/web integration tests: source tampering and new startup capabilities are detected with a rewritten valid RECORD; unchanged capabilities and known generated metadata remain informational. Stop at human PR review; do not merge automatically.
+Acceptance met in offline fixtures and shared CLI/web integration tests: source tampering and new startup capabilities are detected with a rewritten valid RECORD; unchanged capabilities and known generated metadata remain informational. The maintainer merged this milestone; automatic merging remains prohibited.
 
-## Later milestones (not delivered)
+## Consolidated integration — feat/package-intelligence
 
-3. Exact-version PyPI retrieval, network boundaries and conservative source revision resolution.
-4. Real Ollama/Qwen inference with schema/evidence validation and recorded model/license/digest evidence.
-5. Deterministic release DNA and interactive timeline.
-6. Proof Capsule HTML export and deterministic policy configuration/evaluation.
-7. Watchlists, durable background jobs, progress, monitoring and product completion.
-8. Authentication, private-scan isolation, PostgreSQL/migrations, isolated workers, operational acceptance.
+Based on merged main `dcaf3c1`. The consolidated request supersedes separate milestone PRs: one integration PR containing independently tested commits, followed by human review.
 
-Current product has no PyPI search, model inference, provenance verification, runtime behavior proof, Release Gate or watchlist. Continue to milestone 3 only after milestone 2 PR review and merge.
+Implemented and offline tested (163 tests):
+
+| Priority | Delivered functionality | Acceptance |
+| --- | --- | --- |
+| P0 | Exact-name/version PyPI, bounded download, digest/identity checks, claimed GitHub correspondence | Real idna 3.10 bytes verified; unsupported source/layout remains PARTIAL |
+| P0 | Pinned private Qwen structured evidence investigator | Real CLI and HTTP web inference; schema/evidence/digest/failure regression tests |
+| P0 | Deterministic Release DNA | Real idna 3.9 → 3.10: 12 artifact changes; stored-snapshot CLI/web comparison |
+| P1 | Static Install Impact Preview | Conditional evidence-backed startup/module/entry-point edges; truncation explicit |
+| P1 | JSON/HTML Proof Capsule | Escaped standalone actual report; deterministic DNA capsule example |
+| P1 | Release Gate | Evidence-cited ALLOW/REVIEW/BLOCK, strict config, persisted settings; AI independent |
+| P1 | Watchlist/history | Manual latest metadata checks, transactional duplicate suppression, optional changed-release scans |
+| P1 | Background status | Bounded PyPI/AI queue, persisted actual status, INTERRUPTED on restart, retry by resubmission |
+| Deployment | Private Linux Docker/Compose configuration and health check | Configuration supplied; Docker runtime unavailable and unverified |
+
+Final wheel installation, real integrated workflows and final-head remote CI are recorded in TEST_EVIDENCE.md. Public multi-user production acceptance is **not complete**: authentication/authorization, per-user isolation, PostgreSQL/migrations, isolated durable workers, monitoring/alerts and operational restore/load tests remain deferred. This integration does not authenticate provenance, execute packages, infer proven runtime paths or use trained historical ML.
+
+Stop at the single integration PR review boundary. Never merge automatically or bypass failing CI.
 
 ## Event timing
 
 Checked 2026-11-01 against [MLH event schedule](https://events.mlh.com/events/15017-hacktoberfest-hack-day-sonipat-x-rishihood-university).
 The detailed schedule lists building from 6 PM to 6 AM and evaluation starting at 6 AM. No explicit submission freeze is published there, and the header displays CDT despite the Indian venue. Treat 6 AM on November 1 in the venue's local time as a conservative planning target, not a verified freeze. Preserve final testing time; organizer announcements remain authoritative.
-
-## Consolidated implementation — feat/package-intelligence
-
-Based on merged main dcaf3c1. One final integration PR, per the consolidated user request. Priority order: real PyPI, real local Qwen, Release DNA, then remaining unique features and deployment.
-
-PyPI adapter implemented with offline regression tests (130 total passing): exact versions, bounded public HTTPS downloads, digest/size checks, claimed repository discovery, exact-tag commit correspondence and explicit artifact-only partial reports. Exact GitHub tag ZIP comments are an unverified correspondence fallback when unauthenticated API quota is exhausted; no default branch substitution. Real idna 3.10 registry digest verified. Qwen/DNA and later features are still in progress/unverified.
-
-Local Qwen integration: real pinned-model generation validated (812 prompt / 397 output tokens, 19.58s), offline schema/evidence/digest/failure tests passing. CLI and browser share the investigator; model conclusions remain unverified and cannot overwrite deterministic facts. Historical DNA is next.
-
-Release DNA implemented and tested (147 total tests): file hashes, bounded import/capability inventory, entry-point/dependency declarations, first-observed indicators and explicit partial-history uncertainty. Real idna 3.9 → 3.10 comparison produced 12 artifact changes. CLI and web comparison routes share compare_releases; repeated comparisons do not duplicate evidence.

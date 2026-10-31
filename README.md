@@ -2,18 +2,20 @@
 
 **What you review isn't always what you install.**
 
-pkgtruth compares a Python wheel against explicitly selected local source and turns content differences and static security indicators into inspectable evidence. One deterministic engine powers an installable CLI and a responsive FastAPI web application. Built by **Commit-tee** for Hacktoberfest 2026, Problem 4: Published Package vs Source Code Integrity Analyzer.
+pkgtruth investigates Python wheels against selected source and prior artifacts. One shared Python engine powers a browser application and CLI. Built by **Commit-tee** for Hacktoberfest 2026, Problem 4: Published Package vs Source Code Integrity Analyzer.
 
-## Working today — milestone 2
+## Working features
 
-- Virtual wheel/source ZIP inspection with bounded decompression, path/link/collision protections; no target execution.
-- Source-directory comparison in the CLI, and explicit source-prefix mapping in both interfaces.
-- Added, removed, modified and identical files; SHA-256 hashes; stable evidence IDs; bounded text diffs and binary handling.
-- Uploads, real investigation results, searchable/filterable file explorer, local SQLite report history, JSON download.
-- Wheel RECORD hash/size consistency, startup hooks, bounded Python AST capabilities, native/bytecode indicators, and static entry-point/dependency comparisons.
-- Versioned Pydantic reports and deterministic offline security/interface tests.
+- Local wheel/source comparison and exact-name PyPI lookup with exact-version scans, bounded downloads and registry SHA-256 verification.
+- Conservative GitHub release correspondence, file hashes/diffs, wheel RECORD checks, startup hooks, bounded AST capabilities and static dependency/entry-point comparisons.
+- Real private Ollama **qwen3.5:4b** explanations of selected evidence. Structured responses must cite offered evidence IDs. Model output cannot change deterministic facts or adoption policies.
+- **Release DNA:** compare stored artifacts or two exact PyPI releases for changed files, imports, declarations and first-observed capabilities, relative to that baseline.
+- **Install Impact Preview:** conditional startup/module/entry-point relationships backed by static evidence.
+- **Proof Capsule:** downloadable JSON and standalone escaped HTML with findings, hashes, model details, history, coverage and uncertainty.
+- **Release Gate:** configurable deterministic ALLOW / REVIEW / BLOCK, with policy rules and evidence references.
+- Manual latest-release watchlist, duplicate-suppressed observations, local scan history, bounded background PyPI/AI jobs and real status polling. Interrupted jobs require resubmission.
 
-No PyPI retrieval, provenance verification, runtime behavior analysis, policy evaluation, watchlists or AI inference yet. Static indicators do not establish execution. Matching source and a valid RECORD do **not** prove safety. `COMPLETE` describes supported inspection coverage only; unvalidated RECORD or parser limits make analysis PARTIAL. See [roadmap](docs/ROADMAP.md).
+No investigated code is installed, imported, built or executed. Valid RECORD means internal consistency; registry hashes identify downloaded bytes. Neither authenticates source or establishes package safety. GitHub correspondence is **unverified**, provenance remains NOT_CHECKED, and limited inspection is PARTIAL. AI explanations are unverified hypotheses, not verdicts.
 
 ## Install and launch
 
@@ -25,49 +27,45 @@ python examples/generate.py
 pkgtruth serve --port 8000
 ```
 
-Open **http://127.0.0.1:8000**. Start an investigation using `examples/clean.whl` or `examples/tampered.whl` and `examples/source.zip`. Leave source prefix blank. Results contain only real analysis data.
+Open http://127.0.0.1:8000 directly in a normal browser. Upload `examples/startup.whl` and `examples/source.zip` with blank source prefix, or look up `idna` and investigate version `3.10`. Use clean and startup fixture reports as the DNA baseline/current snapshots. Results include real file diffs and evidence; the AI button submits a private local inference job.
 
-For a security demonstration, upload `examples/startup.whl` with the same source ZIP: it introduces a startup directive and network-related import despite a rewritten valid RECORD. `examples/record-mismatch.whl` demonstrates invalid RECORD detection.
-
-This is local, single-user software. Do not expose it publicly or behind a proxy. Reports include source excerpts and persist in `.pkgtruth/` (override with `PKGTRUTH_DATA_DIR`). No raw uploads are retained.
+This is loopback-only, single-user software. Reports include source excerpts and persist in `.pkgtruth/` (override `PKGTRUTH_DATA_DIR`). Raw uploads/downloads are not retained. Do not expose the application or Ollama publicly. Embedded browsers that send `Origin: null` are intentionally denied mutations.
 
 ## CLI
 
 ```sh
-pkgtruth --help
-pkgtruth scan local --wheel examples/clean.whl --source examples/source
-pkgtruth scan local --wheel examples/tampered.whl --source examples/source.zip --json --output report.json
-pkgtruth scan local --wheel examples/clean.whl --source /path/to/repo --source-prefix src
-pkgtruth report <scan-id> --output exported.json
+pkgtruth scan local --wheel examples/clean.whl --source examples/source.zip --json
+pkgtruth scan pypi --name idna --version 3.10 --json --output report.json
+pkgtruth scan local --wheel examples/startup.whl --source examples/source.zip --ai --json
+pkgtruth investigate <scan-id> --json
+pkgtruth dna idna --previous 3.9 --current 3.10 --json
+pkgtruth dna --previous <baseline-scan-id> --current <current-scan-id> --json
+pkgtruth report <scan-id> --format html --output capsule.html
+pkgtruth policy check --report report.json --json
+pkgtruth watch --add idna --json
+pkgtruth watch --once --scan-new --json
+pkgtruth watch --remove idna
 ```
 
-Exit codes: **0** = complete supported inspection, valid RECORD and no MEDIUM/HIGH findings (informational packaging differences may remain); **1** = review required due to unexplained differences or partial mapping; **2** = invalid arguments, rejected input or operational error. JSON scan output goes exclusively to stdout, errors to stderr. Exit 0 is not a security approval.
+Scan/DNA exits: **0** complete supported inspection and configured policy ALLOW; **1** review/block, partial coverage or requested AI unavailable; **2** invalid input/operation error. `policy check` exits **0 ALLOW / 1 REVIEW / 2 BLOCK / 3 error**. `investigate` exits 0 only for validated AI output; export/watch success means the operation completed, not package approval. JSON output goes to stdout and errors to stderr. Exit 0 and ALLOW never guarantee safety.
 
-Source prefix is exact, relative and case-sensitive: use `project-1.0/src` when a ZIP contains `project-1.0/src/demo/__init__.py` and the wheel contains `demo/__init__.py`. No source layout is guessed. Source files outside the prefix are excluded and counted; source-only files inside it are reported as removed. Wheel `.data` relocation is unsupported and marked PARTIAL. No shared paths also produces PARTIAL.
+CLI local source directories and ZIPs use an exact case-sensitive `--source-prefix`, e.g. `release/src`. PyPI resolution supports a unique overlapping root or `src` layout at an exact version tag/commit; unsupported or ambiguous correspondence yields artifact-only PARTIAL coverage. Wheels only; no source-distribution build fallback. Watch checks registry metadata manually; `--scan-new` additionally investigates a new/changed snapshot. No autonomous scheduler or alert delivery is claimed.
 
-Only the commands shown above are supported. PyPI, DNA, watch and policy commands belong to future milestones.
+## Private Qwen
 
-## Reports and architecture
+The default API is `http://127.0.0.1:11434`. `PKGTRUTH_OLLAMA_URL` permits only documented private host spellings, not arbitrary public endpoints. The model tag must match the pinned digest in [HACKATHON.md](HACKATHON.md). Generation requests structured JSON with context 4096, output 1024, temperature 0 and thinking disabled. Missing model, digest mismatch, schema failure and unknown evidence references produce explicit statuses while preserving deterministic results. Actual CLI and web inference was verified; CI uses deterministic mocks.
 
-`inputs.py` safely reads untrusted inputs; `analysis.py` is the single comparison service; `security.py` supplies deterministic static rules; `models.py` defines schema **1.1** (with legacy 1.0 reading); `storage.py` persists reports; `cli.py` and `web.py` are thin interfaces. Templates, CSS and vanilla JS ship in the Python wheel, with no Node build or external CDN assets.
+## Reports, tests and deployment
 
-JSON includes artifact and source-tree hashes, explicit mappings, all file differences, stable evidence and finding references, coverage, limitations, and explicit statuses for unimplemented checks. See [report contract](docs/REPORT_SCHEMA.md) and [actual example inputs/outputs](examples/README.md). Known packaging metadata is informational by filename convention, not verified legitimate; security checks still inspect its contents. See [security rules and limits](docs/SECURITY_RULES.md). Text previews may truncate; hashes cover full inspected bytes.
-
-Routes: `GET /`, `GET /scans/new`, `POST /scans`, `GET /scans/{id}`, `GET /scans/{id}/report.json`, `GET /health`. Interactive docs are disabled; the report contract is published as a schema file.
-
-## Tests
+`analysis.py` and `security.py` provide the shared static engine; adapters in `pypi.py`, `investigator.py`, `dna.py`, `impact.py`, `policy.py`, `watch.py` and `capsule.py` enrich the same report. `storage.py` uses SQLite and `jobs.py` a bounded single-process worker. Templates/CSS/vanilla JS ship in the Python wheel, without a Node build or CDN.
 
 ```sh
-pip install -e '.[test]'
 python -m pytest -q
-pkgtruth --help
 python -m build
+python examples/generate.py
+git diff --exit-code -- examples docs/report.schema.json
 ```
 
-CI installs the built wheel in a clean environment and runs tests from outside the repository, including web/CLI equivalence, RECORD inconsistency and rewritten-valid RECORD tampering, startup/AST rules, metadata changes, false-positive cases, multipart uploads, escaping and archive/resource boundaries. It needs no network services during tests. Actual local commands/results and remote CI status are recorded in [test evidence](docs/TEST_EVIDENCE.md).
+Existing CI builds and installs the actual wheel, tests it outside the checkout, validates CLI/web, then checks deterministic regeneration. No external PyPI/Ollama services are needed in CI. [Examples](examples/README.md), [report schema 1.2](docs/REPORT_SCHEMA.md), [test evidence](docs/TEST_EVIDENCE.md), [security limits](docs/SECURITY_RULES.md), [decisions](docs/DECISIONS.md) and [roadmap](docs/ROADMAP.md) document behavior and acceptance.
 
-## AI and deployment status
-
-**Product models: none.** Ollama and `qwen3.5:4b` are planned; genuine inference, structured-output validation, digest/license recording and evidence grounding remain unverified. Codex helped implement milestones 1 and 2; PRs disclose coding assistance separately from runtime AI.
-
-[Deployment instructions](docs/DEPLOYMENT.md) describe the loopback-only boundary and remaining production checks. [Engineering decisions](docs/DECISIONS.md) document trade-offs and limits. MIT licensed. No public production-readiness claim.
+[Deployment](docs/DEPLOYMENT.md) includes Docker/Compose configuration and remaining operational blockers. Docker execution is unverified on this machine. Authentication, per-user authorization, PostgreSQL/migrations and isolated durable workers remain unimplemented; no secure public multi-user deployment is claimed. MIT licensed. Codex implementation assistance is disclosed separately from runtime Qwen.

@@ -1,29 +1,31 @@
-# Local deployment
+# Private deployment
 
-Requires Python 3.12 or newer. Run from the repository root:
+Requires Python 3.12+. Follow the README virtualenv installation and launch `pkgtruth serve --port 8000`. The service binds only 127.0.0.1 and rejects remote clients, untrusted Host headers and cross-origin mutations. Access directly from a normal browser. Never publish through a tunnel or reverse proxy.
+
+`PKGTRUTH_DATA_DIR` selects the SQLite report/job/watch/settings directory, default `.pkgtruth` relative to launch. Reports include bounded source excerpts and model output. Protect directory permissions and backups; stop the service before copying or deleting its database. Raw package/source downloads and uploads are held only during processing and discarded, not installed or executed. Report/job history has no automatic retention cleanup; watch observations retain the latest 200 entries. Removing a watched package is available through the CLI. Deleting the data directory intentionally resets all stored state.
+
+Health: `GET /health` checks local database access. PyPI/AI jobs persist QUEUED/RUNNING/COMPLETE/FAILED status, with at most two unfinished jobs and one worker. On restart unfinished jobs become INTERRUPTED; resubmit manually. This is single-process persistence, not reliable distributed execution. Run one application process per database. Do not start CLI writers concurrently with the web service when investigating the same report: deterministic scan IDs intentionally update that report's AI/DNA annotations.
+
+## Private Ollama
+
+Run Ollama on the deployment host/private machine and provision the exact `qwen3.5:4b` digest recorded in HACKATHON.md. The server does not download models. Set `PKGTRUTH_OLLAMA_URL=http://127.0.0.1:11434` (default). Permitted private host spellings also include `localhost`, `[::1]`, `ollama` and `host.docker.internal`, port 11434 only; no credentials, paths or arbitrary public URLs. Container hostnames must resolve inside a trusted private network. Do not expose Ollama to the Internet. A remote production host cannot assume it can reach the developer's Mac.
+
+AI is optional. Unavailable API, wrong digest, oversized/malformed JSON and invalid evidence references remain explicit failure states. Deterministic scans and policy checks continue without a model. Metadata requests time out after 5s and generation after 120s; response size and prompt context are bounded. The actual license/runtime metadata is recorded per investigation; allowlisted evidence IDs do not prove model statements correct.
+
+## Docker configuration (not executed here)
+
+Docker is unavailable on the development machine, so image building, Compose startup and container health checks are **not verified**. Provided configuration targets a private **Linux host**:
 
 ```sh
-python3 -m venv .venv
-. .venv/bin/activate
-pip install -e '.[test]'
-python examples/generate.py
-pkgtruth serve --port 8000
+docker compose build
+docker compose up -d
+docker compose logs pkgtruth
 ```
 
-Open http://127.0.0.1:8000 directly in a normal browser. Sandboxed embedded browsers that send `Origin: null` are intentionally rejected for uploads. Use examples/clean.whl or examples/tampered.whl with examples/source.zip. Source prefix is blank for these fixtures.
+`compose.yaml` uses Linux host networking to retain the application loopback boundary, not a public port mapping. The image runs as UID 10001, stores reports in `/data`, uses a read-only root, bounded `/tmp`, dropped capabilities, resource limits and a loopback HTTP health check. Host networking on other platforms requires explicit support; no portable desktop-container claim is made. Inspect the configuration and verify volume ownership, private Ollama availability, limits and health on the actual host before using it. The Docker base tag and dependencies are version ranges, not a reproducibly pinned production supply chain.
 
-`PKGTRUTH_DATA_DIR` selects the local report directory (default `.pkgtruth` relative to the launch directory). The store contains code excerpts; protect it as sensitive data. Stop the server before deleting this directory to clear stored scans. Raw uploads are discarded after processing.
+## Operational acceptance and remaining blockers
 
-The server is intentionally loopback-only, single-user, with no authentication. It rejects remote HTTP clients and does not trust proxy forwarding for access control. Do not expose it through a tunnel, reverse proxy or public container mapping. A source ZIP must be within the documented archive limits. Source-directory inspection is available only in the CLI.
+Verified locally: virtual archive/AST limits, no target execution, bounded approved-host HTTPS with DNS/private-address checks, digest/size checks, HTML escaping/CSP, local access/origin/CSRF boundaries, exact-name lookup rate limiting (20/minute), queue capacity, database-backed status and duplicate-suppressed watch observations. Heavy analysis is serialized; limits are cooperative and no hard process sandbox is claimed.
 
-## Not production ready
-
-Public deployment is deferred. Required work includes authentication, authorization, per-user report isolation, CSRF/session review for authenticated use, request-rate limits, isolated durable workers with hard memory/CPU/deadline controls, database migrations, retention, audit logging, TLS, load/recovery testing and deployment rollback. Docker/Compose is deferred until an isolated service configuration can preserve the local access boundary. Health route: `/health`.
-
-Current web uploads keep their request open during bounded inspection. No durable jobs or background scan progress are claimed. Run a single process for the local scan concurrency limit. Never expose Ollama publicly if future milestones add it.
-
-## Milestone 2 verification workspace
-
-Version 0.2.0 writes schema 1.1 and can read/export original schema 1.0 reports. Stop old application processes before upgrading a shared report store; old 0.1 binaries cannot interpret new schema 1.1 results. The current verification server uses `PKGTRUTH_DATA_DIR=.pkgtruth/milestone2` and port 8002 to avoid mixing with the earlier running demo. Reproduce real HTTP checks with `python scripts/verify_running.py --port 8002` after starting that server.
-
-Static security limits and unsupported shapes are documented in SECURITY_RULES.md. Invalid/missing/unresolved RECORD and parser failures make a report PARTIAL. A valid RECORD and even COMPLETE coverage do not establish publisher authenticity or package safety. No production deployment claims have changed.
+Before public multi-user deployment, implement and independently verify authentication, authorization, per-user scan isolation, isolated cancellable workers, robust queue leases/retries, proxy/TLS configuration, aggregate upload/concurrency limits, migrations, retention, operational monitoring, backup/restore and load/adversarial acceptance. PostgreSQL and external alerting are not implemented. Do not bypass the current local boundary to simulate production readiness.
