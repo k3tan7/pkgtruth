@@ -1,0 +1,5 @@
+include AGENTS.md HACKATHON.md requirements.txt
+recursive-include docs *.md *.json
+recursive-include tests *.py
+recursive-include examples *.py *.md *.whl *.zip *.json
+recursive-include scripts *.py

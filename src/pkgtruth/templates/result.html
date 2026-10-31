@@ -1,0 +1,78 @@
+{% extends 'base.html' %}{% block title %}Investigation · {{ report.input_artifact }} · pkgtruth{% endblock %}{% block content %}
+<a href="/" class="breadcrumb">← Investigations</a>
+<div class="eyebrow">INVESTIGATION / {{ report.scan_id[:12] }}</div>
+<div class="page-heading">
+<div>
+<h1 class="artifact-title">{{ report.input_artifact }}</h1>
+<p class="subtitle">Explicit source mapping · <code>{{ report.mappings[0].source_prefix or '(root)' }}</code>
+</p>
+</div>
+<a class="button secondary" href="/scans/{{ report.scan_id }}/report.json">↓ Export JSON</a>
+</div>
+<section class="verdict">
+<span class="badge {{ 'warn' if report.analysis_status == 'PARTIAL' else '' }}">{{ report.analysis_status }}</span>
+<h2>{{ 'Mapping needs review' if report.analysis_status == 'PARTIAL' else 'Comparison finished' }}</h2>
+<p>{{ report.findings|length }} differences recorded. Findings describe content changes, not proof of malicious activity.</p>
+<small>Provenance: NOT_CHECKED &nbsp; / &nbsp; RECORD: NOT_CHECKED &nbsp; / &nbsp; AI: NOT_CONFIGURED</small>
+</section>
+<div class="metrics">{% for name in ['identical','modified','added','removed'] %}<div class="metric">
+<span>{{ name|upper }}</span>
+<strong class="{{ 'accent' if name == 'identical' else '' }}">{{ report.coverage|attr(name) }}</strong>
+<small>files</small>
+</div>{% endfor %}</div>
+<details class="panel evidence-meta">
+<summary>Artifact identity &amp; coverage</summary>
+<p>SHA-256 <code class="hash">{{ report.artifact_sha256 }}</code>
+</p>
+<p>{{ report.coverage.artifact_files }} artifact files · {{ report.coverage.source_files }} mapped source files · {{ report.coverage.excluded_source_files }} source files excluded</p>
+<p>Source tree SHA-256 <code class="hash">{{ report.source_tree_sha256 }}</code>
+</p>
+</details>
+<div class="section-heading">
+<h2>File explorer</h2>
+<span class="muted">{{ report.coverage.compared_files }} paths compared</span>
+</div>
+<div class="filters">
+<label for="file-search" class="sr-only">Search file paths</label>
+<input id="file-search" type="search" placeholder="Search file paths…">
+<label for="status-filter" class="sr-only">Filter by change</label>
+<select id="status-filter">
+<option value="all">All changes</option>{% for status in ['modified','added','removed','identical'] %}<option value="{{ status }}">{{ status|capitalize }}</option>{% endfor %}</select>
+<span id="filter-count" role="status">
+</span>
+</div>
+<div class="file-list">{% for file in report.file_differences %}<details class="file-entry" data-path="{{ file.path|lower }}" data-status="{{ file.status }}">
+<summary>
+<span class="status-mark {{ file.status }}">{{ {'added':'+','removed':'−','modified':'~','identical':'='}[file.status] }}</span>
+<code>{{ file.path }}</code>
+<span class="badge {{ 'warn' if file.classification == 'unexplained' else '' }}">{{ file.status }}</span>
+</summary>
+<div class="file-detail">
+<p class="muted">{{ file.classification|replace('_', ' ') }} · <code>{{ file.evidence_id }}</code> <button type="button" class="copy" data-copy="{{ file.evidence_id }}">Copy evidence ID</button>
+</p>
+<dl>
+<dt>Source SHA-256</dt>
+<dd>{{ file.source_sha256 or 'Absent' }}</dd>
+<dt>Artifact SHA-256</dt>
+<dd>{{ file.artifact_sha256 or 'Absent' }}</dd>
+</dl>{% if file.binary %}<p>Binary or non-UTF-8 content. Compare hashes; text preview is unavailable.</p>{% elif file.diff %}<pre class="diff">{{ file.diff }}</pre>{% else %}<p>Contents are byte-identical.</p>{% endif %}{% if file.excerpt_truncated %}<p class="note">Preview truncated. Full inspected content is covered by the hashes.</p>{% endif %}</div>
+</details>{% endfor %}</div>
+<p id="no-matches" hidden>No files match these filters.</p>
+<div class="section-heading">
+<h2>Evidence-backed findings</h2>
+<span class="muted">Deterministic / rules v{{ report.rule_version }}</span>
+</div>{% for finding in report.findings %}<div class="finding">
+<span class="badge {{ 'warn' if finding.severity == 'MEDIUM' else '' }}">{{ finding.severity }}</span>
+<div>
+<code>{{ finding.id }}</code>
+<p>{{ finding.explanation }}</p>
+<small>Evidence: {{ finding.evidence_ids|join(', ') }}</small>
+</div>
+</div>{% else %}<div class="panel">
+<p>No byte differences in the selected scope. This does not prove safety.</p>
+</div>{% endfor %}
+<details class="panel limitations" open>
+<summary>Coverage &amp; limitations</summary>
+<ul>{% for limitation in report.limitations %}<li>{{ limitation }}</li>{% endfor %}</ul>
+</details>
+{% endblock %}

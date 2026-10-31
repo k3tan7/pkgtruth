@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}pkgtruth · Package integrity{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', path='app.css') }}">
+<script src="{{ url_for('static', path='app.js') }}" defer>
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<aside>
+<a class="brand" href="/" aria-label="pkgtruth home">
+<span class="brand-icon">p.</span>pkgtruth</a>
+<p class="aside-label">WORKSPACE</p>
+<nav aria-label="Main">
+<a href="/" {% if request.url.path == '/' %}aria-current="page"{% endif %}>◫ &nbsp; Investigations</a>
+<a href="/scans/new" {% if request.url.path == '/scans/new' %}aria-current="page"{% endif %}>＋ &nbsp; New scan</a>
+</nav>
+<div class="aside-bottom">
+<span class="dot">
+</span> Local workspace<p>Static analysis · v0.1.0<br>Single-user preview</p>
+</div>
+</aside>
+<div class="workspace">
+<header>
+<span>COMMIT-TEE <span class="muted">/</span> PACKAGE INTELLIGENCE</span>
+<span class="local-badge">● &nbsp; LOCAL ENGINE</span>
+</header>
+<main id="main">{% block content %}{% endblock %}</main>
+<footer>What you review isn't always what you install.<span>pkgtruth / Hacktoberfest 2026</span>
+</footer>
+</div>
+</body>
+</html>

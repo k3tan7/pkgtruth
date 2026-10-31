@@ -10,9 +10,9 @@
 Problem 4: Published Package vs Source Code Integrity Analyzer
 
 ## AI models used
-- gemma4:e4b via Ollama: explains each detected difference and writes the
-  risk summary. Chosen because it is open-weight, runs locally on an Apple
-  Silicon laptop, and is accurate enough for short explanations.
+- none in the current product (milestone 1). Analysis is deterministic local byte comparison.
+- Planned: `qwen3.5:4b` via local Ollama for evidence-grounded explanations on a 16 GiB machine. Integration, model license/digest and genuine inference have not yet been verified. This is not a declaration of actual model use.
 
 ## AI coding assistants
-- ChatGPT (helps write and debug code)
+- ChatGPT (repository setup and earlier debugging assistance).
+- Codex (milestone 1 implementation, tests and documentation).
