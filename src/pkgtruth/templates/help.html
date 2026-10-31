@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% block title %}Help &amp; Documentation · pkgtruth{% endblock %}
+
+{% block content %}
+<a class="breadcrumb" href="/">Dashboard / Help</a>
+
+<div class="eyebrow">USER GUIDE &amp; ONBOARDING</div>
+<h1>Welcome to pkgtruth</h1>
+<p class="subtitle">pkgtruth is a private, local cybersecurity intelligence platform that inspects Python packages before you install them. It helps you see what changed between reviewed source code and published wheel archives.</p>
+
+<div class="grid">
+  <section class="panel">
+    <div class="panel-header">
+      <h2>How to investigate a package</h2>
+      <span class="badge">5 Steps</span>
+    </div>
+    <ol class="step-list">
+      <li>
+        <div>
+          <strong>Open Scan Package</strong>
+          <small class="muted">Navigate to Scan Package in the workspace sidebar.</small>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Find your package on PyPI</strong>
+          <small class="muted">Enter the exact name (e.g., <code>idna</code>, <code>requests</code>) to list published versions.</small>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Select a release version</strong>
+          <small class="muted">Choose the version you are evaluating and click <strong>Analyze Package</strong>.</small>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Read the 5-second summary</strong>
+          <small class="muted">Check the plain-English verdict, findings count, and recommended next steps at the top.</small>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Explore findings &amp; technical diffs</strong>
+          <small class="muted">Review "What we found" cards and expand technical details to inspect file differences.</small>
+        </div>
+      </li>
+    </ol>
+    <div class="actions spaced">
+      <a class="button" href="/packages">Scan a package now →</a>
+    </div>
+  </section>
+
+  <section class="panel flat">
+    <div class="panel-header">
+      <h2>Decoding verdicts &amp; coverage</h2>
+      <span class="badge neutral">Definitions</span>
+    </div>
+
+    <div class="info-stack">
+      <div class="info-item">
+        <strong>Supported checks completed</strong>
+        <p class="small muted">All supported static tests and file comparisons finished successfully. <em>This does not guarantee the software is free from vulnerabilities or malicious logic.</em></p>
+      </div>
+
+      <div class="info-item">
+        <strong>Coverage needs review (PARTIAL)</strong>
+        <p class="small muted">Some checks could not be completed (e.g., source repository was unavailable, or files exceeded parsing bounds). Review the limitations section in the report.</p>
+      </div>
+
+      <div class="info-item">
+        <strong>Source correspondence</strong>
+        <p class="small muted">pkgtruth attempts to locate the upstream repository declared in package metadata. Finding a matching release tag is an unauthenticated claim by the publisher, not cryptographic provenance.</p>
+      </div>
+
+      <div class="info-item">
+        <strong>Wheel RECORD integrity</strong>
+        <p class="small muted">A valid RECORD file confirms internal package consistency—that files inside the wheel match the creator's manifest. It does not prove publisher authenticity.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<section class="panel">
+  <div class="panel-header">
+    <h2>Translating technical packaging terminology</h2>
+    <span class="badge neutral">Glossary</span>
+  </div>
+  <div class="fact-strip two-col">
+    <div class="fact-card">
+      <div>
+        <span class="fact-label">ARTIFACT_ONLY</span>
+        <span class="fact-value">Present only in the published wheel</span>
+      </div>
+      <span class="fact-detail">Files found inside the package that were not present in the compared source repository. May be compiled assets or unexpected additions.</span>
+    </div>
+    <div class="fact-card">
+      <div>
+        <span class="fact-label">SOURCE_ONLY</span>
+        <span class="fact-value">Present only in the source repository</span>
+      </div>
+      <span class="fact-detail">Files in git that were omitted from the wheel. Tests, docs, and CI configs are commonly omitted from built wheels to reduce download size.</span>
+    </div>
+    <div class="fact-card">
+      <div>
+        <span class="fact-label">RECORD mismatch</span>
+        <span class="fact-value">Internal package digest mismatch</span>
+      </div>
+      <span class="fact-detail">The cryptographic hash or size of a file does not match the manifest inside <code>.dist-info/RECORD</code>, indicating post-packaging corruption or tampering.</span>
+    </div>
+    <div class="fact-card">
+      <div>
+        <span class="fact-label">Startup directive (.pth)</span>
+        <span class="fact-value">Automatic startup code execution</span>
+      </div>
+      <span class="fact-detail">A <code>.pth</code> file containing import statements executes code as soon as Python initializes, before user code imports any module.</span>
+    </div>
+  </div>
+</section>
+
+<div class="grid">
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Platform Capabilities</h2>
+      <span class="badge neutral">Features</span>
+    </div>
+    <ul class="feature-list">
+      <li><strong>Compare Releases (Release DNA):</strong> Track how package capabilities evolved between two releases to spot newly introduced execution surfaces.</li>
+      <li><strong>Watchlist:</strong> Track critical packages on PyPI and receive notice when newly published versions or changed distribution digests appear.</li>
+      <li><strong>Security Rules:</strong> Define deterministic policies that flag packages for review or block installation when high-priority indicators occur.</li>
+      <li><strong>Local AI Investigator:</strong> Ask local Qwen via Ollama to explain observed patterns without leaking package code or findings to external cloud services.</li>
+      <li><strong>Proof Capsule:</strong> Export a standalone, self-contained, offline HTML report containing all verified findings and cryptographic hashes.</li>
+    </ul>
+  </section>
+
+  <section class="panel accent-border-warn" id="limits">
+    <div class="panel-header">
+      <h2>What pkgtruth cannot guarantee</h2>
+      <span class="badge warn">Boundaries</span>
+    </div>
+    <p class="muted">pkgtruth provides grounded evidence to assist human security decisions. It is not an absolute oracle of safety:</p>
+    <ul class="feature-list">
+      <li><strong>Zero code execution:</strong> pkgtruth never executes or tests target packages at runtime. Dynamic behavior, memory safety issues, and network activity occurring during runtime execution cannot be observed.</li>
+      <li><strong>Unauthenticated provenance:</strong> Matching GitHub tags are public declarations. Unless cryptographically signed with Sigstore or PEP 740 attestations, finding matching source does not prove git produced the wheel.</li>
+      <li><strong>Parser resource bounds:</strong> Files exceeding size limits (e.g., 16 MiB archives, 128 KiB parser buffers) are bounded to prevent denial-of-service.</li>
+    </ul>
+    <div class="note">
+      Always treat findings as verified evidence to guide an informed engineering choice, not as absolute proof of innocence or malicious activity.
+    </div>
+  </section>
+</div>
+
+{% endblock %}

@@ -1,36 +1,59 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{% block title %}pkgtruth · Package integrity{% endblock %}</title>
-<link rel="stylesheet" href="{{ url_for('static', path='app.css') }}">
-<script src="{{ url_for('static', path='app.js') }}" defer>
-</script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}pkgtruth · Package Release Intelligence{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='app.css') }}">
+  <script src="{{ url_for('static', path='app.js') }}" defer></script>
 </head>
 <body>
-<a class="skip" href="#main">Skip to content</a>
-<aside>
-<a class="brand" href="/" aria-label="pkgtruth home">
-<span class="brand-icon">p.</span>pkgtruth</a>
-<p class="aside-label">WORKSPACE</p>
-<nav aria-label="Main"><a href="/watchlist">◉ &nbsp; Watchlist</a><a href="/policy">◇ &nbsp; Release Gate</a><a href="/packages">⌕ &nbsp; PyPI investigation</a>
-<a href="/" {% if request.url.path == '/' %}aria-current="page"{% endif %}>◫ &nbsp; Investigations</a>
-<a href="/scans/new" {% if request.url.path == '/scans/new' %}aria-current="page"{% endif %}>＋ &nbsp; New scan</a>
-</nav>
-<div class="aside-bottom">
-<span class="dot">
-</span> Local workspace<p>Static analysis · v0.3.0<br>Single-user preview</p>
-</div>
-</aside>
-<div class="workspace">
-<header>
-<span>COMMIT-TEE <span class="muted">/</span> PACKAGE INTELLIGENCE</span>
-<span class="local-badge">● &nbsp; LOCAL ENGINE</span>
-</header>
-<main id="main">{% block content %}{% endblock %}</main>
-<footer>What you review isn't always what you install.<span>pkgtruth / Hacktoberfest 2026</span>
-</footer>
-</div>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <aside class="sidebar">
+    <a class="brand" href="/" aria-label="pkgtruth home">
+      <span class="brand-icon" aria-hidden="true">p</span>
+      <span>pkgtruth</span><span class="brand-dot">.</span>
+    </a>
+
+    <p class="nav-label">Workspace</p>
+    <nav aria-label="Main">
+      {% for url,label,icon in [
+        ('/', 'Dashboard', '◈'),
+        ('/packages', 'Scan Package', '＋'),
+        ('/investigations', 'Investigations', '▤'),
+        ('/compare', 'Compare Releases', '⇄'),
+        ('/watchlist', 'Watchlist', '◉'),
+        ('/policy', 'Security Rules', '◇'),
+        ('/help', 'Help & Docs', '?')
+      ] %}
+      <a href="{{ url }}" {% if request.url.path == url or (url == '/investigations' and request.url.path.startswith('/scans/') and request.url.path != '/scans/new') or (url == '/packages' and request.url.path == '/scans/new') %}aria-current="page"{% endif %}>
+        <span aria-hidden="true">{{ icon }}</span>
+        <span>{{ label }}</span>
+      </a>
+      {% endfor %}
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="sidebar-foot-status"><span class="live-dot"></span>Private local workspace</div>
+      <small>Target packages are never imported, installed, or executed.</small>
+    </div>
+  </aside>
+
+  <div class="workspace">
+    <header class="topbar">
+      <span>Package release intelligence &amp; evidence platform</span>
+      <a href="/help#limits">Understand inspection limits <span aria-hidden="true">↗</span></a>
+    </header>
+
+    <main id="main" tabindex="-1">
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+      <span>What you review isn't always what you install.</span>
+      <span>Commit-tee · Private local intelligence</span>
+    </footer>
+  </div>
 </body>
 </html>

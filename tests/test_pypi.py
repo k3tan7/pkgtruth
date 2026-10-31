@@ -152,3 +152,31 @@ def test_wheel_declared_identity_mismatch_is_not_accepted(registry):
     metadata['urls'][0]['digests']['sha256']=hashlib.sha256(wheel).hexdigest()
     with pytest.raises(InputError,match='identity'):
         scan_pypi('demo','1.0',fetcher=fetcher)
+
+
+def test_source_discovery_trace_and_actual_phases(registry):
+    phases = []
+    report = scan_pypi('demo', '1.0', fetcher=registry[0], progress=phases.append)
+    assert phases == ['LOOKUP', 'DOWNLOAD', 'SOURCE_DISCOVERY', 'ANALYSIS']
+    assert report.retrieval['claimed_repository_fields'] == ['project_urls.Source']
+    assert report.retrieval['source_retrieved'] is True
+    assert report.retrieval['source_comparison_performed'] is True
+    assert report.retrieval['source_tag'] == '1.0'
+    assert report.provenance_status == 'NOT_CHECKED'
+
+
+def test_source_retrieval_is_distinct_from_comparison(registry):
+    fetcher, responses, _ = registry
+    responses['/example/demo/zip/' + 'a' * 40] = make_zip({'root/demo.py': b'pass\n', 'root/src/demo.py': b'pass\n'})
+    report = scan_pypi('demo', '1.0', fetcher=fetcher)
+    assert report.retrieval['source_retrieved'] is True
+    assert report.retrieval['source_comparison_performed'] is False
+    assert report.retrieval['source_archive_inspected'] is False
+    assert any('ambiguous' in note for note in report.retrieval['source_discovery_notes'])
+    assert report.source_resolution == 'ARTIFACT_ONLY'
+
+
+def test_versions_use_python_version_order_not_string_order(registry):
+    fetcher, _, metadata = registry
+    metadata['releases'] = {'3.9': [], '3.10': [], '3.11rc1': [], '3.11': [], 'legacy.invalid': []}
+    assert project_versions('demo', fetcher)['versions'] == ['3.11', '3.11rc1', '3.10', '3.9', 'legacy.invalid']

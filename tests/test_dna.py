@@ -78,3 +78,23 @@ def test_dna_cli_and_web_share_comparison(tmp_path, monkeypatch, capsys):
         assert response.status_code==303
         assert client.get(response.headers['location']+'/report.json').json()==cli
         assert 'FIRST_OBSERVED_PTH_EXECUTION' in client.get(response.headers['location']).text
+
+
+@pytest.mark.parametrize('before,after,direction', [('3.9','3.10','FORWARD'),('3.10','3.9','REVERSE'),('1.0','1.0','SAME_VERSION'),(None,'1.0','UNKNOWN')])
+def test_dna_explains_actual_comparison_direction(before, after, direction):
+    previous, current = scan({'demo.py':b'pass\n'}), scan({'demo.py':b'pass\n'})
+    previous.package_version, current.package_version = before, after
+    report = compare_releases(previous, current)
+    assert report.dna_baseline['direction'] == direction
+    assert report.dna_baseline['direction_explanation']
+
+
+def test_removed_capabilities_have_self_contained_comparison_evidence():
+    previous = scan({'demo.py':b'import socket\n','start.pth':b'import demo\n'})
+    current = scan({'demo.py':b'pass\n'})
+    report = compare_releases(previous,current)
+    assert {'REMOVED_NETWORK_CAPABILITY','REMOVED_PTH_EXECUTION','REMOVED_IMPORT'} <= {a['kind'] for a in report.historical_anomalies}
+    known={e.id for e in report.evidence}
+    for anomaly in report.historical_anomalies:
+        assert set(anomaly['evidence_ids']) <= known
+    assert compare_releases(previous,report) == report

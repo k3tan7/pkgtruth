@@ -48,6 +48,7 @@ def watch_once(store, *, fetcher=None, scan_new=False):
                         item['scan_error']=str(exc)[:300]
                 results.append(item)
             except (InputError,OSError,ValueError) as exc:
+                store.watch_error(name, exc)
                 results.append({'name':name,'status':'ERROR','error':str(exc)[:300]})
     finally:
         if own: fetcher.close()

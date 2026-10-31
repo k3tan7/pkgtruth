@@ -1,0 +1,32 @@
+{% set decision_labels = decision_labels | default({
+    'ALLOW': 'Allowed by rules',
+    'REVIEW': 'Needs review',
+    'BLOCK': 'Blocked by rules'
+}) %}
+
+{% for item in scans[:8] %}
+<div class="data-row">
+  <div>
+    <a class="row-title" href="/scans/{{ item.scan_id }}">
+      {{ item.package_name or item.input_artifact }}
+      {% if item.package_version %}<span class="muted">{{ item.package_version }}</span>{% endif %}
+    </a>
+    <small>
+      <code>{{ item.input_artifact }}</code> ·
+      {{ 'Coverage limited (PARTIAL)' if item.analysis_status == 'PARTIAL' else 'Supported checks completed' }}
+    </small>
+  </div>
+  <div class="row-meta-stacked">
+    <span class="badge {{ 'danger' if item.policy_decision and item.policy_decision.decision == 'BLOCK' else 'warn' if not item.policy_decision or item.policy_decision.decision != 'ALLOW' else '' }}">
+      {{ decision_labels.get(item.policy_decision.decision, 'Not evaluated') if item.policy_decision else 'Not evaluated' }}
+    </span>
+    <small>{{ item.scan_id[:8] }}</small>
+  </div>
+</div>
+{% else %}
+<div class="empty">
+  <h3>Your evidence library is ready</h3>
+  <p>Search for a public package or upload local files to run your first inspection.</p>
+  <a class="button" href="/packages">Scan your first package →</a>
+</div>
+{% endfor %}

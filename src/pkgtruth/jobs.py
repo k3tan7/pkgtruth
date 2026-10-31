@@ -13,7 +13,11 @@ class JobRunner:
         self.executor=ThreadPoolExecutor(max_workers=1,thread_name_prefix='pkgtruth-local')
         with store.connect() as db:
             db.execute('CREATE TABLE IF NOT EXISTS jobs (id TEXT PRIMARY KEY, kind TEXT NOT NULL, payload TEXT NOT NULL, status TEXT NOT NULL, scan_id TEXT, error TEXT, created TEXT DEFAULT CURRENT_TIMESTAMP)')
-            db.execute("UPDATE jobs SET status='INTERRUPTED',error='Service restarted; submit a new job.' WHERE status IN ('QUEUED','RUNNING')")
+            columns = {row[1] for row in db.execute('PRAGMA table_info(jobs)')}
+            if 'phase' not in columns:
+                db.execute("ALTER TABLE jobs ADD COLUMN phase TEXT NOT NULL DEFAULT 'QUEUED'")
+                db.execute('UPDATE jobs SET phase=status')
+            db.execute("UPDATE jobs SET status='INTERRUPTED',phase='INTERRUPTED',error='Service restarted; submit a new job.' WHERE status IN ('QUEUED','RUNNING')")
 
     def run_sync(self,fn,*args,**kwargs):
         with self.gate:
@@ -21,11 +25,11 @@ class JobRunner:
 
     def get(self,job_id):
         with self.store.connect() as db:
-            row=db.execute('SELECT id,kind,status,scan_id,error,created FROM jobs WHERE id=?',(job_id,)).fetchone()
-        return dict(zip(('id','kind','status','scan_id','error','created_utc'),row)) if row else None
+            row=db.execute('SELECT id,kind,status,scan_id,error,created,phase FROM jobs WHERE id=?',(job_id,)).fetchone()
+        return dict(zip(('id','kind','status','scan_id','error','created_utc','phase'),row)) if row else None
 
     def submit(self,kind,payload):
-        if kind not in ('pypi','ai'):
+        if kind not in ('pypi','ai','dna'):
             raise InputError('Unsupported local job kind')
         job_id=uuid.uuid4().hex
         payload={**payload,'policy':self.store.get_policy().model_dump()}
@@ -41,6 +45,11 @@ class JobRunner:
         with self.store.connect() as db:
             db.execute('UPDATE jobs SET status=?,scan_id=?,error=? WHERE id=?',(status,scan_id,error,job_id))
 
+    def phase(self, job_id, phase):
+        # Only internal stage names reach this method; a phase records actual work entered.
+        with self.store.connect() as db:
+            db.execute('UPDATE jobs SET phase=? WHERE id=?', (phase, job_id))
+
     def work(self,job_id,kind,payload):
         with self.gate:
             self.update(job_id,'RUNNING')
@@ -48,15 +57,28 @@ class JobRunner:
                 if kind=='pypi':
                     from .pypi import scan_pypi
                     from .policy import apply_policy,PolicyConfig
-                    report=apply_policy(scan_pypi(payload['name'],payload['version']),PolicyConfig.model_validate(payload['policy']))
+                    report=apply_policy(scan_pypi(payload['name'],payload['version'], progress=lambda phase:self.phase(job_id,phase)),PolicyConfig.model_validate(payload['policy']))
+                elif kind=='dna':
+                    from .pypi import scan_pypi
+                    from .dna import compare_releases
+                    from .policy import apply_policy,PolicyConfig
+                    previous=scan_pypi(payload['name'],payload['previous'],progress=lambda phase:self.phase(job_id,'BASELINE_'+phase))
+                    self.store.save(previous)
+                    current=scan_pypi(payload['name'],payload['current'],progress=lambda phase:self.phase(job_id,'TARGET_'+phase))
+                    self.phase(job_id,'COMPARISON')
+                    report=apply_policy(compare_releases(previous,current),PolicyConfig.model_validate(payload['policy']))
                 else:
+                    self.phase(job_id,'AI')
                     from .investigator import investigate
                     original=self.store.get(payload['scan_id'])
                     if original is None: raise InputError('Report not found')
                     report=investigate(original)
+                self.phase(job_id,'SAVING')
                 self.store.save(report)
                 self.update(job_id,'COMPLETE',scan_id=report.scan_id)
+                self.phase(job_id,'COMPLETE')
             except Exception as exc:
+                self.phase(job_id,'FAILED')
                 self.update(job_id,'FAILED',error=f'{type(exc).__name__}: {str(exc)[:250]}')
 
     def close(self):

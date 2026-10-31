@@ -4,6 +4,7 @@ import io
 import zipfile
 import re
 from urllib.parse import quote, urlsplit
+from packaging.version import Version, InvalidVersion
 
 from .analysis import analyze
 from .inputs import InputError, MAX_ARCHIVE, read_zip
@@ -42,22 +43,29 @@ def project_versions(name, fetcher=None):
         if not isinstance(releases, dict) or len(releases) > 10000:
             raise InputError('Unsupported release metadata')
         versions = [version for version in releases if isinstance(version, str)]
-        # PyPI supplies version strings; require an exact user selection, not guessed ordering.
-        return {'name': package_name(name), 'latest': data['info'].get('version'), 'versions': versions[-200:],
+        def order(value):
+            try:
+                return (1, Version(value))
+            except InvalidVersion:
+                return (0, value)
+        versions.sort(key=order, reverse=True)
+        return {'name': package_name(name), 'latest': data['info'].get('version'), 'versions': versions[:200],
                 'summary': str(data['info'].get('summary', ''))[:1000]}
     finally:
         if own:
             fetcher.close()
 
 
-def claimed_repository(info):
+def claimed_repository_details(info):
+    """Return the unambiguous claim and the exact metadata fields supplying it."""
     urls = info.get('project_urls') or {}
     if not isinstance(urls, dict):
-        return None
-    preferred = [value for key, value in urls.items() if str(key).lower() in ('source', 'source code', 'repository', 'code', 'github')]
-    candidates = preferred or [*urls.values(), info.get('home_page')]
-    repos = set()
-    for value in candidates:
+        return None, []
+    preferred = [(f'project_urls.{str(key)[:100]}', value) for key, value in urls.items()
+                 if str(key).lower() in ('source', 'source code', 'repository', 'code', 'github')]
+    candidates = preferred or [(f'project_urls.{str(key)[:100]}', value) for key, value in urls.items()] + [('home_page', info.get('home_page'))]
+    repos = {}
+    for field, value in candidates:
         if not isinstance(value, str):
             continue
         try:
@@ -70,8 +78,15 @@ def claimed_repository(info):
         if len(parts) >= 2:
             owner, repo = parts[0], parts[1].removesuffix('.git')
             if all(re.fullmatch(r'[A-Za-z0-9_-][A-Za-z0-9_.-]{0,99}', p) and p not in ('.', '..') for p in (owner, repo)):
-                repos.add(f'{owner}/{repo}')
-    return next(iter(repos)) if len(repos) == 1 else None
+                repos.setdefault(f'{owner}/{repo}', []).append(field)
+    if len(repos) == 1:
+        repo = next(iter(repos))
+        return repo, sorted(set(repos[repo]))[:20]
+    return None, []
+
+
+def claimed_repository(info):
+    return claimed_repository_details(info)[0]
 
 
 def resolve_tag(fetcher, repo, version):
@@ -114,11 +129,13 @@ def choose_source_prefix(archive, wheel):
     return candidates[0]
 
 
-def scan_pypi(name, version, *, fetcher=None):
+def scan_pypi(name, version, *, fetcher=None, progress=None):
     name, version = package_name(name), version_name(version)
     own = fetcher is None
     fetcher = fetcher or Fetcher()
+    notify = progress or (lambda phase: None)
     try:
+        notify('LOOKUP')
         data = release_metadata(fetcher, name, version)
         urls = data.get('urls')
         if not isinstance(urls, list):
@@ -138,10 +155,13 @@ def scan_pypi(name, version, *, fetcher=None):
             raise InputError('PyPI artifact has no valid SHA-256 digest')
         if not isinstance(item.get('size'), int) or not 0 < item['size'] <= MAX_ARCHIVE:
             raise InputError('PyPI wheel size exceeds supported limits')
+        notify('DOWNLOAD')
         wheel = fetcher.get(url)
         if len(wheel) != item['size'] or hashlib.sha256(wheel).hexdigest() != expected:
             raise InputError('Published wheel SHA-256 or size does not match PyPI metadata')
-        repo = claimed_repository(data['info'])
+        notify('SOURCE_DISCOVERY')
+        repo, repository_fields = claimed_repository_details(data['info'])
+        source_retrieved = False
         source, prefix, tag, commit = None, '', None, None
         resolution_method = None
         notes = []
@@ -167,6 +187,7 @@ def scan_pypi(name, version, *, fetcher=None):
                             continue
                 if commit:
                     source = fetcher.get(f'https://codeload.github.com/{repo}/zip/{commit}')
+                    source_retrieved = True
                     prefix = choose_source_prefix(source, wheel)
                 else:
                     notes.append('No exact version/v-version tag resolved; default branches are not substituted.')
@@ -175,6 +196,7 @@ def scan_pypi(name, version, *, fetcher=None):
                 notes.append(f'Claimed source could not be fully inspected: {exc}')
         else:
             notes.append('No unambiguous claimed GitHub repository in package metadata.')
+        notify('ANALYSIS')
         report = analyze(wheel, source, artifact_name=filename, source_prefix=prefix)
         from packaging.version import Version
         identity_verified = report.package_name is not None and report.package_version is not None
@@ -190,6 +212,8 @@ def scan_pypi(name, version, *, fetcher=None):
         report.source_commit = commit
         report.source_resolution = 'PYPI_TAG_UNVERIFIED' if source else 'ARTIFACT_ONLY'
         report.retrieval = {'registry': 'https://pypi.org', 'artifact_url': url, 'registry_sha256': expected,
+            'claimed_repository_fields': repository_fields, 'source_retrieved': source_retrieved,
+            'source_comparison_performed': source is not None, 'source_discovery_notes': notes.copy(),
             'registry_digest_verified': True, 'wheel_metadata_identity_verified': identity_verified, 'claimed_repository': f'https://github.com/{repo}' if repo else None,
             'source_tag': tag, 'source_resolution_method': resolution_method, 'source_archive_sha256': hashlib.sha256(source).hexdigest() if source else None, 'source_archive_inspected': source is not None,
             'source_correspondence': 'TAG_MATCH_UNVERIFIED' if commit else 'UNRESOLVED'}

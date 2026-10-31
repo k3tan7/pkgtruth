@@ -1,72 +1,68 @@
-{% extends 'base.html' %}{% block title %}New investigation · pkgtruth{% endblock %}{% block content %}
-<a href="/" class="breadcrumb">← Investigations</a>
-<div class="eyebrow">FOLLOW THE EVIDENCE</div>
-<h1>New investigation<span class="accent">.</span>
-</h1>
-<p class="subtitle">Two inputs. One transparent comparison. No package code is executed.</p>
-{% if error %}<div class="error" role="alert">
-<strong>Input rejected</strong>
-<p>{{ error }}</p>Correct the input and choose both files again.</div>{% endif %}
-<div class="new-layout">
+{% extends 'base.html' %}
+{% block title %}Inspect Local Files · pkgtruth{% endblock %}
+
+{% block content %}
+<a class="breadcrumb" href="/">Dashboard / Scan Package</a>
+
+<div class="eyebrow">YOUR FILES, YOUR COMPARISON</div>
+<h1>Inspect local files</h1>
+<p class="subtitle">Compare a published Python wheel against the source files you expect it to contain.</p>
+
+<nav class="tabs" aria-label="Scan method">
+  <a href="/packages">From PyPI</a>
+  <a href="/scans/new" aria-current="page">Upload local files</a>
+</nav>
+
+{% if error %}
+<div class="error" role="alert">
+  <strong>Input rejected</strong>
+  <p>{{ error }}</p>
+  <p class="small">Correct the input files and select both archives again.</p>
+</div>
+{% endif %}
+
 <form action="/scans" method="post" enctype="multipart/form-data" id="scan-form">
-<input type="hidden" name="csrf" value="{{ csrf }}">
-<section class="panel">
-<div class="step-title">
-<span>01</span>
-<h2>Choose your inputs</h2>
-<span class="badge">LOCAL</span>
-</div>
-<div class="uploads">
-<label class="upload" for="wheel">
-<span class="upload-symbol">⬡</span>
-<strong>Published wheel</strong>
-<span>The artifact you would install</span>
-<input id="wheel" type="file" name="wheel" accept=".whl" required>
-<small>.whl · up to 16 MiB</small>
-</label>
-<label class="upload" for="source">
-<span class="upload-symbol">⌘</span>
-<strong>Reviewed source</strong>
-<span>A ZIP of the source to compare</span>
-<input id="source" type="file" name="source" accept=".zip" required>
-<small>.zip · up to 16 MiB</small>
-</label>
-</div>
-</section>
-<section class="panel">
-<div class="step-title">
-<span>02</span>
-<h2>Map the source root</h2>
-</div>
-<label for="source-prefix">Source prefix <span class="muted">(optional)</span>
-</label>
-<input type="text" id="source-prefix" name="source_prefix" placeholder="e.g. demo-1.0/src" maxlength="512" autocomplete="off">
-<p class="help">Enter the exact folder inside the ZIP corresponding to the wheel root. For <code>demo-1.0/src/demo/__init__.py</code>, use <code>demo-1.0/src</code>. Leave blank if <code>demo/</code> is at the ZIP root. Files outside this prefix are excluded and counted.</p>
-</section>
-<div class="form-end">
-<p>No network requests. No target execution.<br>Raw uploads are discarded after comparison.</p>
-<button class="button" type="submit" id="submit-scan">Run investigation ↗</button>
-</div>
-<div id="scan-progress" role="status" hidden>Uploading and comparing files… Results will appear when inspection finishes.</div>
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+
+  <div class="grid">
+    <section class="panel">
+      <label for="wheel">Published package (.whl)</label>
+      <p class="help">The built distribution archive (.whl) that users install. Here it is statically unpacked and analyzed without execution.</p>
+      <div class="upload">
+        <strong>Choose a wheel file (.whl)</strong>
+        <input id="wheel" type="file" name="wheel" accept=".whl" required>
+        <small>Up to 16 MiB · never imported or executed</small>
+      </div>
+    </section>
+
+    <section class="panel">
+      <label for="source">Expected source archive (.zip)</label>
+      <p class="help">A ZIP archive of the source code repository or release tarball you want to compare against the package.</p>
+      <div class="upload">
+        <strong>Choose a source archive (.zip)</strong>
+        <input id="source" type="file" name="source" accept=".zip" required>
+        <small>Up to 16 MiB · unsafe archive paths &amp; symlinks rejected</small>
+      </div>
+    </section>
+  </div>
+
+  <details class="panel">
+    <summary>Advanced: folder prefix inside the source ZIP</summary>
+    <div>
+      <label for="source-prefix">Source prefix (optional)</label>
+      <input id="source-prefix" name="source_prefix" maxlength="512" placeholder="e.g. demo-1.0/src or mypackage/src">
+      <p class="help">If your ZIP root contains <code>demo-1.0/src/demo/__init__.py</code> and the wheel contains <code>demo/__init__.py</code>, enter <code>demo-1.0/src</code>. Otherwise leave blank. Files outside this folder are safely excluded from comparison.</p>
+    </div>
+  </details>
+
+  <div class="actions spaced">
+    <button class="button" type="submit" id="submit-scan">Analyze files →</button>
+    <span class="muted small">Uploaded archives are parsed in memory and discarded immediately after inspection.</span>
+  </div>
+
+  <div id="scan-progress" class="note" role="status" hidden>
+    Uploading and comparing files…
+  </div>
 </form>
-<div class="side-notes">
-<span class="eyebrow">WHAT GETS CHECKED</span>
-<h3>Evidence, down to the byte.</h3>
-<ol>
-<li>
-<strong>Validate the inputs</strong>
-<p>Reject unsafe paths, links, collisions and excessive archive sizes.</p>
-</li>
-<li>
-<strong>Compare mapped files</strong>
-<p>Compare SHA-256, validate RECORD, and inspect startup hooks, Python syntax and metadata.</p>
-</li>
-<li>
-<strong>Explore the differences</strong>
-<p>Inspect bounded text diffs and export a versioned JSON report.</p>
-</li>
-</ol>
-<div class="note">RECORD consistency and static indicators do not establish authenticity or execution. Provenance and runtime behavior remain unverified. Local source selection is an explicit assertion by you.</div>
-</div>
-</div>
+
 {% endblock %}

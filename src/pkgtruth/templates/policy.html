@@ -1,1 +1,90 @@
-{% extends 'base.html' %}{% block content %}<div class="eyebrow">DETERMINISTIC / EXPLAINABLE</div><h1>Release Gate.</h1><p>Policies apply to future scans. ALLOW means configured checks passed, never that a package is proven safe. Invalid RECORD/provenance always blocks; unavailable RECORD requires review. AI does not decide policy.</p><form action="/policy" method="post" class="panel"><input type="hidden" name="csrf" value="{{ csrf }}">{% for key in ['require_complete','review_medium','block_high','require_verified_provenance'] %}<p><label><input type="checkbox" name="{{ key }}" {% if config|attr(key) %}checked{% endif %}> {{ key|replace('_',' ')|capitalize }}</label></p>{% endfor %}<button class="button" type="submit">Save local policy</button></form>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}Security Rules · Release Gate Policy · pkgtruth{% endblock %}
+
+{% block content %}
+<a class="breadcrumb" href="/">Dashboard / Security Rules</a>
+
+<div class="eyebrow">RELEASE GATE</div>
+<h1>Your rules. Clear decisions.</h1>
+<p class="subtitle">Configure automated release policies for future investigations. Decide when packages should be marked allowed, flagged for human review, or blocked from installation.</p>
+
+{% if request.query_params.get('saved') %}
+<div class="alert success" role="status">
+  <strong>Policy updated successfully!</strong>
+  <p class="small">Your new security rules will automatically apply to all upcoming package scans. Previously evaluated reports preserve the policy version used when they were generated.</p>
+</div>
+{% endif %}
+
+<div class="grid">
+  <form action="/policy" method="post" class="panel rules">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+
+    <div class="panel-header">
+      <h2>Automated Policy Rules</h2>
+      <span class="badge neutral">Release Gate</span>
+    </div>
+    <p class="help">Toggle the criteria used to evaluate inspected wheels. Changes take effect on the next scan.</p>
+
+    {% for key, title, description, consequence in [
+      ('require_complete', 'Require supported checks to finish', 'Flag for review if inspection coverage is incomplete (for instance, if source repository matching fails or file bounds are exceeded).', 'Incomplete inspection triggers REVIEW.'),
+      ('review_medium', 'Review potentially concerning changes', 'Ask for manual review when medium-priority differences, unexpected executable additions, or declared entry point changes are detected.', 'Medium findings trigger REVIEW.'),
+      ('block_high', 'Block high-priority findings', 'Block adoption of releases containing high-priority static indicators (such as automatic .pth startup scripts or customize modules). Static findings indicate activation surfaces, not proof of malicious intent.', 'High findings trigger BLOCK.'),
+      ('require_verified_provenance', 'Require independently verified origin', 'Require signed or authenticated build provenance from the repository to PyPI. Because pkgtruth does not currently authenticate external build signatures, enabling this will flag all current scans for review.', 'Unverified provenance triggers REVIEW.')
+    ] %}
+    <div class="rule">
+      <label>
+        <input type="checkbox" name="{{ key }}" {% if config|attr(key) %}checked{% endif %}>
+        <span>
+          {{ title }}
+          <small>{{ description }}</small>
+          <small class="consequence">{{ consequence }}</small>
+        </span>
+      </label>
+    </div>
+    {% endfor %}
+
+    <div class="actions spaced">
+      <button class="button" type="submit">Save security rules</button>
+    </div>
+  </form>
+
+  <section class="panel flat">
+    <div class="panel-header">
+      <h2>Decoding Release Decisions</h2>
+      <span class="badge">Reference</span>
+    </div>
+    <p class="muted">Every investigation evaluates against your rules and assigns one of three transparent verdicts:</p>
+
+    <div class="info-stack">
+      <div class="decision-guide-item">
+        <div class="decision-guide-header">
+          <span class="badge">ALLOW</span>
+          <h3>Allowed under configured rules</h3>
+        </div>
+        <p class="small muted">All enabled checks completed without triggering blocking or review conditions. <em>Reminder: No static analysis can guarantee complete safety or absence of zero-days.</em></p>
+      </div>
+
+      <div class="decision-guide-item">
+        <div class="decision-guide-header">
+          <span class="badge warn">REVIEW</span>
+          <h3>Needs human review</h3>
+        </div>
+        <p class="small muted">Differences, unverified source correspondence, or coverage gaps were identified. Review the findings and changed files before approving installation.</p>
+      </div>
+
+      <div class="decision-guide-item">
+        <div class="decision-guide-header">
+          <span class="badge danger">BLOCK</span>
+          <h3>Blocked by configured rules</h3>
+        </div>
+        <p class="small muted">A blocking condition was triggered. Note: corrupt wheel RECORD manifests or invalid internal checksums always trigger an immediate BLOCK regardless of toggles.</p>
+      </div>
+    </div>
+
+    <div class="note">
+      <strong>Deterministic integrity:</strong> Local AI models can explain evidence, but they can NEVER alter, override, or relax your deterministic policy decisions.
+    </div>
+  </section>
+</div>
+
+{% endblock %}
