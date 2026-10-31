@@ -69,4 +69,6 @@ def compare_releases(previous, current):
             emit('DECLARATION_CHANGED', field, before.get(field), after.get(field), 'MEDIUM')
     if len(result.historical_anomalies) > 3000:
         raise InputError('Historical comparison exceeds anomaly limit')
-    return result
+    from .policy import apply_policy, PolicyConfig
+    config = PolicyConfig.model_validate(current.policy_decision.config) if current.policy_decision else PolicyConfig()
+    return apply_policy(result, config)

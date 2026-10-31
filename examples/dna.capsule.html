@@ -1,0 +1,724 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"><title>pkgtruth Proof Capsule · demo 1.0</title><style>body{font:16px system-ui;margin:3rem auto;padding:0 1rem;max-width:1000px;background:#111817;color:#e4eee6}code,pre{overflow-wrap:anywhere;white-space:pre-wrap}h1{color:#b8ed85}details{border:1px solid #4b5f50;padding:1rem}p{line-height:1.7}</style></head><body><h1>pkgtruth Proof Capsule</h1><h2>demo 1.0</h2><p>Artifact SHA-256: <code>055a1a14e0680d44d58599a2242c438027c474b55ec065df2b8784624b4faa08</code></p><p>Coverage: COMPLETE · RECORD: VALID · Provenance: NOT_CHECKED · Release Gate: REVIEW</p><p>This evidence report is not signed or tamper-proof. Configured checks, static indicators and AI explanations do not prove safety or execution. Source correspondence may be unverified.</p><h2>Findings</h2><ul><li><strong>INFORMATIONAL</strong> demo-1.0.dist-info/METADATA: added. Wheel packaging metadata can be generated; its legitimacy is not verified. <code>E-b18dced87388d389</code></li><li><strong>INFORMATIONAL</strong> demo-1.0.dist-info/RECORD: added. Wheel packaging metadata can be generated; its legitimacy is not verified. <code>E-9368ed95b9a56245</code></li><li><strong>INFORMATIONAL</strong> demo-1.0.dist-info/WHEEL: added. Wheel packaging metadata can be generated; its legitimacy is not verified. <code>E-dd3f69cfc81396a6</code></li><li><strong>INFORMATIONAL</strong> demo-1.0.dist-info/entry_points.txt: added. Wheel packaging metadata can be generated; its legitimacy is not verified. <code>E-9d839cc01c056d2d</code></li><li><strong>MEDIUM</strong> demo/extra.py: added relative to the selected source root. Review the difference; it does not establish malicious behavior. <code>E-990c854162472d40</code></li><li><strong>MEDIUM</strong> demo/message.py: modified relative to the selected source root. Review the difference; it does not establish malicious behavior. <code>E-f7bb344e28a9cacf</code></li><li><strong>MEDIUM</strong> startup.pth: added relative to the selected source root. Review the difference; it does not establish malicious behavior. <code>E-94b3806424ff871b</code></li><li><strong>MEDIUM</strong> demo/message.py:1: NETWORK_CAPABILITY, NEW relative to mapped source. Syntactic module reference or call; bindings, control flow, reachability and actual execution are not established. <code>E-S-49b99f97739f9294</code></li><li><strong>HIGH</strong> startup.pth:1: PTH_EXECUTION, NEW relative to mapped source. Executable .pth directive is a possible startup surface when installed in a processed site directory. <code>E-S-3c075a4785b6aefd</code></li><li><strong>MEDIUM</strong> console_scripts declarations in demo-1.0.dist-info/entry_points.txt: UNKNOWN. Declarative metadata is not proof of installation or execution. <code>E-9d839cc01c056d2d</code></li></ul><h2>Coverage limitations</h2><ul><li>Local user-selected source is not authenticated and is not tied to a repository commit.</li><li>Static inspection only: no target code was executed. Matching files do not prove safety.</li><li>RECORD checks internal consistency only. A rewritten valid RECORD does not authenticate a publisher or establish safety.</li><li>Static Python rules are syntactic: aliases, local modules, shadowing, indirect calls, runtime code and reachability are not resolved.</li><li>Python, PTH and metadata parsing is limited to 128 KiB per file and 20,000 AST nodes. Unparsed files make analysis PARTIAL.</li><li>Source metadata outside the selected prefix is not used; missing or dynamic declarations leave metadata comparisons UNKNOWN.</li><li>Provenance is not authenticated. AI and historical comparisons run only when requested; consult their explicit statuses. Release Gate evaluates configured deterministic checks.</li><li>Packaging metadata is identified by path only; generated content is not verified.</li><li>Source-prefix selection defines scope. Files outside that prefix are counted but excluded.</li><li>Text excerpts and diffs are bounded previews; SHA-256 hashes cover full inspected contents.</li><li>No in-scope source metadata baseline: dependency/entry-point changes cannot be established. Choose a source root containing static project metadata to compare declarations.</li></ul><details open><summary>Complete versioned evidence, DNA, AI and policy JSON</summary><pre>{
+  &quot;schema_version&quot;: &quot;1.2&quot;,
+  &quot;tool_version&quot;: &quot;0.3.0&quot;,
+  &quot;rule_version&quot;: &quot;static-security-2&quot;,
+  &quot;scan_id&quot;: &quot;bfe06004e6a72ddf5b333ab9f4ab14a9&quot;,
+  &quot;analysis_status&quot;: &quot;COMPLETE&quot;,
+  &quot;input_artifact&quot;: &quot;startup.whl&quot;,
+  &quot;source_resolution&quot;: &quot;LOCAL_USER_MAPPING&quot;,
+  &quot;artifact_sha256&quot;: &quot;055a1a14e0680d44d58599a2242c438027c474b55ec065df2b8784624b4faa08&quot;,
+  &quot;source_tree_sha256&quot;: &quot;6e23e2147fdd9ad2c363af9c8f650dc3c42cf253c2fb4756f9f6d12a33fe3b45&quot;,
+  &quot;source_commit&quot;: null,
+  &quot;package_name&quot;: &quot;demo&quot;,
+  &quot;package_version&quot;: &quot;1.0&quot;,
+  &quot;retrieval&quot;: {},
+  &quot;mappings&quot;: [
+    {
+      &quot;source_prefix&quot;: &quot;&quot;,
+      &quot;artifact_prefix&quot;: &quot;&quot;,
+      &quot;method&quot;: &quot;explicit_relative_path&quot;
+    }
+  ],
+  &quot;file_differences&quot;: [
+    {
+      &quot;path&quot;: &quot;demo-1.0.dist-info/METADATA&quot;,
+      &quot;source_path&quot;: null,
+      &quot;status&quot;: &quot;added&quot;,
+      &quot;artifact_sha256&quot;: &quot;34aa27a6064f958b41b781a217f290fd0ab5f9651e2b6e4acdab341b7b93c305&quot;,
+      &quot;source_sha256&quot;: null,
+      &quot;classification&quot;: &quot;packaging_metadata&quot;,
+      &quot;evidence_id&quot;: &quot;E-b18dced87388d389&quot;,
+      &quot;binary&quot;: false,
+      &quot;diff&quot;: &quot;--- source/demo-1.0.dist-info/METADATA\n+++ wheel/demo-1.0.dist-info/METADATA\n@@ -0,0 +1,3 @@\n+Metadata-Version: 2.1\n+Name: demo\n+Version: 1.0\n&quot;,
+      &quot;excerpt_truncated&quot;: false
+    },
+    {
+      &quot;path&quot;: &quot;demo-1.0.dist-info/RECORD&quot;,
+      &quot;source_path&quot;: null,
+      &quot;status&quot;: &quot;added&quot;,
+      &quot;artifact_sha256&quot;: &quot;a301d56bb5e6a8818084bd12ab164ed18ae7e3c4dbd3a7515f2f522b81b46457&quot;,
+      &quot;source_sha256&quot;: null,
+      &quot;classification&quot;: &quot;packaging_metadata&quot;,
+      &quot;evidence_id&quot;: &quot;E-9368ed95b9a56245&quot;,
+      &quot;binary&quot;: false,
+      &quot;diff&quot;: &quot;--- source/demo-1.0.dist-info/RECORD\n+++ wheel/demo-1.0.dist-info/RECORD\n@@ -0,0 +1,8 @@\n+demo-1.0.dist-info/METADATA,sha256=NKonpgZPlYtBt4GiF_KQ_Qq1-WUeK25Kzas0G3uTwwU,46\n+demo-1.0.dist-info/WHEEL,sha256=IFiGwbMoEWDDJhhl4Y-JlrNS9m7g9TYUJi8VBDUEIds,87\n+demo-1.0.dist-info/entry_points.txt,sha256=u0AQTjY-OOv5DR1zQQuKZ670Suy_mOL7HRvQek-WpGo,44\n+demo/__init__.py,sha256=hel9tVLU4jCYT2uJGIuQuI91vPdTHpp5AaORtZ_KX-o,40\n+demo/extra.py,sha256=k3j8VU53yA-Bp92NIWKX8bQ-PC7KmM3F2DqTjqd-1NI,18\n+demo/message.py,sha256=1pU0XSY-BLI9X9Mx_tbBY-Ask0FUbaOqe4yvNEBwoOM,64\n+startup.pth,sha256=XVxcWTahjmpzPpOmbyQKX1TiYF6TvBSpLNcxH9v9qtQ,28\n+demo-1.0.dist-info/RECORD,,\n&quot;,
+      &quot;excerpt_truncated&quot;: false
+    },
+    {
+      &quot;path&quot;: &quot;demo-1.0.dist-info/WHEEL&quot;,
+      &quot;source_path&quot;: null,
+      &quot;status&quot;: &quot;added&quot;,
+      &quot;artifact_sha256&quot;: &quot;205886c1b3281160c3261865e18f8996b352f66ee0f53614262f1504350421db&quot;,
+      &quot;source_sha256&quot;: null,
+      &quot;classification&quot;: &quot;packaging_metadata&quot;,
+      &quot;evidence_id&quot;: &quot;E-dd3f69cfc81396a6&quot;,
+      &quot;binary&quot;: false,
+      &quot;diff&quot;: &quot;--- source/demo-1.0.dist-info/WHEEL\n+++ wheel/demo-1.0.dist-info/WHEEL\n@@ -0,0 +1,4 @@\n+Wheel-Version: 1.0\n+Generator: pkgtruth-example\n+Root-Is-Purelib: true\n+Tag: py3-none-any\n&quot;,
+      &quot;excerpt_truncated&quot;: false
+    },
+    {
+      &quot;path&quot;: &quot;demo-1.0.dist-info/entry_points.txt&quot;,
+      &quot;source_path&quot;: null,
+      &quot;status&quot;: &quot;added&quot;,
+      &quot;artifact_sha256&quot;: &quot;bb40104e363e38ebf90d1d73410b8a67aef44aecbf98e2fb1d1bd07a4f96a46a&quot;,
+      &quot;source_sha256&quot;: null,
+      &quot;classification&quot;: &quot;packaging_metadata&quot;,
+      &quot;evidence_id&quot;: &quot;E-9d839cc01c056d2d&quot;,
+      &quot;binary&quot;: false,
+      &quot;diff&quot;: &quot;--- source/demo-1.0.dist-info/entry_points.txt\n+++ wheel/demo-1.0.dist-info/entry_points.txt\n@@ -0,0 +1,2 @@\n+[console_scripts]\n+demo=demo.message:message\n&quot;,
+      &quot;excerpt_truncated&quot;: false
+    },
+    {
+      &quot;path&quot;: &quot;demo/__init__.py&quot;,
+      &quot;source_path&quot;: &quot;demo/__init__.py&quot;,
+      &quot;status&quot;: &quot;identical&quot;,
+      &quot;artifact_sha256&quot;: &quot;85e97db552d4e230984f6b89188b90b88f75bcf7531e9a7901a391b59fca5fea&quot;,
+      &quot;source_sha256&quot;: &quot;85e97db552d4e230984f6b89188b90b88f75bcf7531e9a7901a391b59fca5fea&quot;,
+      &quot;classification&quot;: &quot;identical&quot;,
+      &quot;evidence_id&quot;: &quot;E-5e4ff052ca0c6143&quot;,
+      &quot;binary&quot;: false,
+      &quot;diff&quot;: &quot;&quot;,
+      &quot;excerpt_truncated&quot;: false
+    },
+    {
+      &quot;path&quot;: &quot;demo/extra.py&quot;,
+      &quot;source_path&quot;: null,
+      &quot;status&quot;: &quot;added&quot;,
+      &quot;artifact_sha256&quot;: &quot;9378fc554e77c80f81a7dd8d216297f1b43e3c2eca98cdc5d83a938ea77ed4d2&quot;,
+      &quot;source_sha256&quot;: null,
+      &quot;classification&quot;: &quot;unexplained&quot;,
+      &quot;evidence_id&quot;: &quot;E-990c854162472d40&quot;,
+      &quot;binary&quot;: false,
+      &quot;diff&quot;: &quot;--- source/demo/extra.py\n+++ wheel/demo/extra.py\n@@ -0,0 +1 @@\n+UNEXPECTED = True\n&quot;,
+      &quot;excerpt_truncated&quot;: false
+    },
+    {
+      &quot;path&quot;: &quot;demo/message.py&quot;,
+      &quot;source_path&quot;: &quot;demo/message.py&quot;,
+      &quot;status&quot;: &quot;modified&quot;,
+      &quot;artifact_sha256&quot;: &quot;d695345d263e04b23d5fd331fed6c163e02c9341546da3aa7b8caf344070a0e3&quot;,
+      &quot;source_sha256&quot;: &quot;f5443387c1e73b533b8e55700403d19fe4a2e7e6a707191e26fa45184b1e33eb&quot;,
+      &quot;classification&quot;: &quot;unexplained&quot;,
+      &quot;evidence_id&quot;: &quot;E-f7bb344e28a9cacf&quot;,
+      &quot;binary&quot;: false,
+      &quot;diff&quot;: &quot;--- source/demo/message.py\n+++ wheel/demo/message.py\n@@ -1,2 +1,4 @@\n+import socket\n+\n def message():\n-    return \&quot;reviewed source\&quot;\n+    return \&quot;changed after review\&quot;\n&quot;,
+      &quot;excerpt_truncated&quot;: false
+    },
+    {
+      &quot;path&quot;: &quot;startup.pth&quot;,
+      &quot;source_path&quot;: null,
+      &quot;status&quot;: &quot;added&quot;,
+      &quot;artifact_sha256&quot;: &quot;5d5c5c5936a18e6a733e93a66f240a5f54e2605e93bc14a92cd7311fdbfdaad4&quot;,
+      &quot;source_sha256&quot;: null,
+      &quot;classification&quot;: &quot;unexplained&quot;,
+      &quot;evidence_id&quot;: &quot;E-94b3806424ff871b&quot;,
+      &quot;binary&quot;: false,
+      &quot;diff&quot;: &quot;--- source/startup.pth\n+++ wheel/startup.pth\n@@ -0,0 +1 @@\n+import demo; demo.VALUE = 2\n&quot;,
+      &quot;excerpt_truncated&quot;: false
+    }
+  ],
+  &quot;record_status&quot;: &quot;VALID&quot;,
+  &quot;record_check&quot;: {
+    &quot;status&quot;: &quot;VALID&quot;,
+    &quot;path&quot;: &quot;demo-1.0.dist-info/RECORD&quot;,
+    &quot;checked_files&quot;: 7,
+    &quot;issues&quot;: []
+  },
+  &quot;behavior_indicators&quot;: [
+    {
+      &quot;id&quot;: &quot;I-49b99f97739f9294&quot;,
+      &quot;kind&quot;: &quot;NETWORK_CAPABILITY&quot;,
+      &quot;path&quot;: &quot;demo/message.py&quot;,
+      &quot;line&quot;: 1,
+      &quot;symbol&quot;: &quot;import: socket&quot;,
+      &quot;relation&quot;: &quot;NEW&quot;,
+      &quot;explanation&quot;: &quot;Syntactic module reference or call; bindings, control flow, reachability and actual execution are not established.&quot;,
+      &quot;evidence_ids&quot;: [
+        &quot;E-S-49b99f97739f9294&quot;
+      ]
+    },
+    {
+      &quot;id&quot;: &quot;I-3c075a4785b6aefd&quot;,
+      &quot;kind&quot;: &quot;PTH_EXECUTION&quot;,
+      &quot;path&quot;: &quot;startup.pth&quot;,
+      &quot;line&quot;: 1,
+      &quot;symbol&quot;: &quot;import demo; demo.VALUE = 2&quot;,
+      &quot;relation&quot;: &quot;NEW&quot;,
+      &quot;explanation&quot;: &quot;Executable .pth directive is a possible startup surface when installed in a processed site directory.&quot;,
+      &quot;evidence_ids&quot;: [
+        &quot;E-S-3c075a4785b6aefd&quot;
+      ]
+    }
+  ],
+  &quot;metadata_changes&quot;: [
+    {
+      &quot;path&quot;: &quot;demo-1.0.dist-info/METADATA&quot;,
+      &quot;field&quot;: &quot;dependencies&quot;,
+      &quot;source_path&quot;: null,
+      &quot;source_values&quot;: null,
+      &quot;artifact_values&quot;: [],
+      &quot;relation&quot;: &quot;UNKNOWN&quot;,
+      &quot;evidence_ids&quot;: [
+        &quot;E-b18dced87388d389&quot;
+      ]
+    },
+    {
+      &quot;path&quot;: &quot;demo-1.0.dist-info/entry_points.txt&quot;,
+      &quot;field&quot;: &quot;console_scripts&quot;,
+      &quot;source_path&quot;: null,
+      &quot;source_values&quot;: null,
+      &quot;artifact_values&quot;: [
+        &quot;demo = demo.message:message&quot;
+      ],
+      &quot;relation&quot;: &quot;UNKNOWN&quot;,
+      &quot;evidence_ids&quot;: [
+        &quot;E-9d839cc01c056d2d&quot;
+      ]
+    },
+    {
+      &quot;path&quot;: &quot;demo-1.0.dist-info/entry_points.txt&quot;,
+      &quot;field&quot;: &quot;gui_scripts&quot;,
+      &quot;source_path&quot;: null,
+      &quot;source_values&quot;: null,
+      &quot;artifact_values&quot;: [],
+      &quot;relation&quot;: &quot;UNKNOWN&quot;,
+      &quot;evidence_ids&quot;: [
+        &quot;E-9d839cc01c056d2d&quot;
+      ]
+    }
+  ],
+  &quot;provenance_status&quot;: &quot;NOT_CHECKED&quot;,
+  &quot;coverage&quot;: {
+    &quot;artifact_files&quot;: 8,
+    &quot;source_files&quot;: 2,
+    &quot;compared_files&quot;: 8,
+    &quot;identical&quot;: 1,
+    &quot;added&quot;: 6,
+    &quot;removed&quot;: 0,
+    &quot;modified&quot;: 1,
+    &quot;excluded_source_files&quot;: 0,
+    &quot;byte_limit_per_file&quot;: 2097152
+  },
+  &quot;findings&quot;: [
+    {
+      &quot;id&quot;: &quot;F-b18dced87388d389&quot;,
+      &quot;rule&quot;: &quot;PACKAGING_METADATA&quot;,
+      &quot;severity&quot;: &quot;INFORMATIONAL&quot;,
+      &quot;explanation&quot;: &quot;demo-1.0.dist-info/METADATA: added. Wheel packaging metadata can be generated; its legitimacy is not verified.&quot;,
+      &quot;evidence_ids&quot;: [
+        &quot;E-b18dced87388d389&quot;
+      ]
+    },
+    {
+      &quot;id&quot;: &quot;F-9368ed95b9a56245&quot;,
+      &quot;rule&quot;: &quot;PACKAGING_METADATA&quot;,
+      &quot;severity&quot;: &quot;INFORMATIONAL&quot;,
+      &quot;explanation&quot;: &quot;demo-1.0.dist-info/RECORD: added. Wheel packaging metadata can be generated; its legitimacy is not verified.&quot;,
+      &quot;evidence_ids&quot;: [
+        &quot;E-9368ed95b9a56245&quot;
+      ]
+    },
+    {
+      &quot;id&quot;: &quot;F-dd3f69cfc81396a6&quot;,
+      &quot;rule&quot;: &quot;PACKAGING_METADATA&quot;,
+      &quot;severity&quot;: &quot;INFORMATIONAL&quot;,
+      &quot;explanation&quot;: &quot;demo-1.0.dist-info/WHEEL: added. Wheel packaging metadata can be generated; its legitimacy is not verified.&quot;,
+      &quot;evidence_ids&quot;: [
+        &quot;E-dd3f69cfc81396a6&quot;
+      ]
+    },
+    {
+      &quot;id&quot;: &quot;F-9d839cc01c056d2d&quot;,
+      &quot;rule&quot;: &quot;PACKAGING_METADATA&quot;,
+      &quot;severity&quot;: &quot;INFORMATIONAL&quot;,
+      &quot;explanation&quot;: &quot;demo-1.0.dist-info/entry_points.txt: added. Wheel packaging metadata can be generated; its legitimacy is not verified.&quot;,
+      &quot;evidence_ids&quot;: [
+        &quot;E-9d839cc01c056d2d&quot;
+      ]
+    },
+    {
+      &quot;id&quot;: &quot;F-990c854162472d40&quot;,
+      &quot;rule&quot;: &quot;CONTENT_DIFFERENCE&quot;,
+      &quot;severity&quot;: &quot;MEDIUM&quot;,
+      &quot;explanation&quot;: &quot;demo/extra.py: added relative to the selected source root. Review the difference; it does not establish malicious behavior.&quot;,
+      &quot;evidence_ids&quot;: [
+        &quot;E-990c854162472d40&quot;
+      ]
+    },
+    {
+      &quot;id&quot;: &quot;F-f7bb344e28a9cacf&quot;,
+      &quot;rule&quot;: &quot;CONTENT_DIFFERENCE&quot;,
+      &quot;severity&quot;: &quot;MEDIUM&quot;,
+      &quot;explanation&quot;: &quot;demo/message.py: modified relative to the selected source root. Review the difference; it does not establish malicious behavior.&quot;,
+      &quot;evidence_ids&quot;: [
+        &quot;E-f7bb344e28a9cacf&quot;
+      ]
+    },
+    {
+      &quot;id&quot;: &quot;F-94b3806424ff871b&quot;,
+      &quot;rule&quot;: &quot;CONTENT_DIFFERENCE&quot;,
+      &quot;severity&quot;: &quot;MEDIUM&quot;,
+      &quot;explanation&quot;: &quot;startup.pth: added relative to the selected source root. Review the difference; it does not establish malicious behavior.&quot;,
+      &quot;evidence_ids&quot;: [
+        &quot;E-94b3806424ff871b&quot;
+      ]
+    },
+    {
+      &quot;id&quot;: &quot;F-S-49b99f97739f9294&quot;,
+      &quot;rule&quot;: &quot;NETWORK_CAPABILITY&quot;,
+      &quot;severity&quot;: &quot;MEDIUM&quot;,
+      &quot;explanation&quot;: &quot;demo/message.py:1: NETWORK_CAPABILITY, NEW relative to mapped source. Syntactic module reference or call; bindings, control flow, reachability and actual execution are not established.&quot;,
+      &quot;evidence_ids&quot;: [
+        &quot;E-S-49b99f97739f9294&quot;
+      ]
+    },
+    {
+      &quot;id&quot;: &quot;F-S-3c075a4785b6aefd&quot;,
+      &quot;rule&quot;: &quot;PTH_EXECUTION&quot;,
+      &quot;severity&quot;: &quot;HIGH&quot;,
+      &quot;explanation&quot;: &quot;startup.pth:1: PTH_EXECUTION, NEW relative to mapped source. Executable .pth directive is a possible startup surface when installed in a processed site directory.&quot;,
+      &quot;evidence_ids&quot;: [
+        &quot;E-S-3c075a4785b6aefd&quot;
+      ]
+    },
+    {
+      &quot;id&quot;: &quot;F-M-797ff787bbe3f9a4&quot;,
+      &quot;rule&quot;: &quot;ENTRY_POINT_CHANGE&quot;,
+      &quot;severity&quot;: &quot;MEDIUM&quot;,
+      &quot;explanation&quot;: &quot;console_scripts declarations in demo-1.0.dist-info/entry_points.txt: UNKNOWN. Declarative metadata is not proof of installation or execution.&quot;,
+      &quot;evidence_ids&quot;: [
+        &quot;E-9d839cc01c056d2d&quot;
+      ]
+    }
+  ],
+  &quot;evidence&quot;: [
+    {
+      &quot;id&quot;: &quot;E-b18dced87388d389&quot;,
+      &quot;path&quot;: &quot;demo-1.0.dist-info/METADATA&quot;,
+      &quot;description&quot;: &quot;added: SHA-256 comparison against the explicitly mapped source&quot;,
+      &quot;source_excerpt&quot;: null,
+      &quot;artifact_excerpt&quot;: &quot;Metadata-Version: 2.1\nName: demo\nVersion: 1.0\n&quot;
+    },
+    {
+      &quot;id&quot;: &quot;E-9368ed95b9a56245&quot;,
+      &quot;path&quot;: &quot;demo-1.0.dist-info/RECORD&quot;,
+      &quot;description&quot;: &quot;added: SHA-256 comparison against the explicitly mapped source&quot;,
+      &quot;source_excerpt&quot;: null,
+      &quot;artifact_excerpt&quot;: &quot;demo-1.0.dist-info/METADATA,sha256=NKonpgZPlYtBt4GiF_KQ_Qq1-WUeK25Kzas0G3uTwwU,46\ndemo-1.0.dist-info/WHEEL,sha256=IFiGwbMoEWDDJhhl4Y-JlrNS9m7g9TYUJi8VBDUEIds,87\ndemo-1.0.dist-info/entry_points.txt,sha256=u0AQTjY-OOv5DR1zQQuKZ670Suy_mOL7HRvQek-WpGo,44\ndemo/__init__.py,sha256=hel9tVLU4jCYT2uJGIuQuI91vPdTHpp5AaORtZ_KX-o,40\ndemo/extra.py,sha256=k3j8VU53yA-Bp92NIWKX8bQ-PC7KmM3F2DqTjqd-1NI,18\ndemo/message.py,sha256=1pU0XSY-BLI9X9Mx_tbBY-Ask0FUbaOqe4yvNEBwoOM,64\nstartup.pth,sha256=XVxcWTahjmpzPpOmbyQKX1TiYF6TvBSpLNcxH9v9qtQ,28\ndemo-1.0.dist-info/RECORD,,\n&quot;
+    },
+    {
+      &quot;id&quot;: &quot;E-dd3f69cfc81396a6&quot;,
+      &quot;path&quot;: &quot;demo-1.0.dist-info/WHEEL&quot;,
+      &quot;description&quot;: &quot;added: SHA-256 comparison against the explicitly mapped source&quot;,
+      &quot;source_excerpt&quot;: null,
+      &quot;artifact_excerpt&quot;: &quot;Wheel-Version: 1.0\nGenerator: pkgtruth-example\nRoot-Is-Purelib: true\nTag: py3-none-any\n&quot;
+    },
+    {
+      &quot;id&quot;: &quot;E-9d839cc01c056d2d&quot;,
+      &quot;path&quot;: &quot;demo-1.0.dist-info/entry_points.txt&quot;,
+      &quot;description&quot;: &quot;added: SHA-256 comparison against the explicitly mapped source&quot;,
+      &quot;source_excerpt&quot;: null,
+      &quot;artifact_excerpt&quot;: &quot;[console_scripts]\ndemo=demo.message:message\n&quot;
+    },
+    {
+      &quot;id&quot;: &quot;E-5e4ff052ca0c6143&quot;,
+      &quot;path&quot;: &quot;demo/__init__.py&quot;,
+      &quot;description&quot;: &quot;identical: SHA-256 comparison against the explicitly mapped source&quot;,
+      &quot;source_excerpt&quot;: &quot;\&quot;\&quot;\&quot;Inert pkgtruth example.\&quot;\&quot;\&quot;\nVALUE = 1\n&quot;,
+      &quot;artifact_excerpt&quot;: &quot;\&quot;\&quot;\&quot;Inert pkgtruth example.\&quot;\&quot;\&quot;\nVALUE = 1\n&quot;
+    },
+    {
+      &quot;id&quot;: &quot;E-990c854162472d40&quot;,
+      &quot;path&quot;: &quot;demo/extra.py&quot;,
+      &quot;description&quot;: &quot;added: SHA-256 comparison against the explicitly mapped source&quot;,
+      &quot;source_excerpt&quot;: null,
+      &quot;artifact_excerpt&quot;: &quot;UNEXPECTED = True\n&quot;
+    },
+    {
+      &quot;id&quot;: &quot;E-f7bb344e28a9cacf&quot;,
+      &quot;path&quot;: &quot;demo/message.py&quot;,
+      &quot;description&quot;: &quot;modified: SHA-256 comparison against the explicitly mapped source&quot;,
+      &quot;source_excerpt&quot;: &quot;def message():\n    return \&quot;reviewed source\&quot;\n&quot;,
+      &quot;artifact_excerpt&quot;: &quot;import socket\n\ndef message():\n    return \&quot;changed after review\&quot;\n&quot;
+    },
+    {
+      &quot;id&quot;: &quot;E-94b3806424ff871b&quot;,
+      &quot;path&quot;: &quot;startup.pth&quot;,
+      &quot;description&quot;: &quot;added: SHA-256 comparison against the explicitly mapped source&quot;,
+      &quot;source_excerpt&quot;: null,
+      &quot;artifact_excerpt&quot;: &quot;import demo; demo.VALUE = 2\n&quot;
+    },
+    {
+      &quot;id&quot;: &quot;E-R-9c3a394db850fac3&quot;,
+      &quot;path&quot;: &quot;demo-1.0.dist-info/RECORD&quot;,
+      &quot;description&quot;: &quot;RECORD consistency VALID: 7 file digests checked. This is not provenance verification.&quot;,
+      &quot;source_excerpt&quot;: null,
+      &quot;artifact_excerpt&quot;: &quot;&quot;
+    },
+    {
+      &quot;id&quot;: &quot;E-S-49b99f97739f9294&quot;,
+      &quot;path&quot;: &quot;demo/message.py&quot;,
+      &quot;description&quot;: &quot;NETWORK_CAPABILITY at line 1: import: socket (NEW relative to mapped source)&quot;,
+      &quot;source_excerpt&quot;: null,
+      &quot;artifact_excerpt&quot;: &quot;import socket\n&quot;
+    },
+    {
+      &quot;id&quot;: &quot;E-S-3c075a4785b6aefd&quot;,
+      &quot;path&quot;: &quot;startup.pth&quot;,
+      &quot;description&quot;: &quot;PTH_EXECUTION at line 1: import demo; demo.VALUE = 2 (NEW relative to mapped source)&quot;,
+      &quot;source_excerpt&quot;: null,
+      &quot;artifact_excerpt&quot;: &quot;import demo; demo.VALUE = 2&quot;
+    },
+    {
+      &quot;id&quot;: &quot;E-DNA-d9ba126cb8cbe410&quot;,
+      &quot;path&quot;: &quot;demo-1.0.dist-info/RECORD&quot;,
+      &quot;description&quot;: &quot;Release DNA comparison against previous release (not claimed source).&quot;,
+      &quot;source_excerpt&quot;: &quot;{\&quot;previous_release\&quot;: \&quot;650e0e0960d972ce4599b6212a3543cbc3826bfe8ed9f1481cf5b56345c94832\&quot;}&quot;,
+      &quot;artifact_excerpt&quot;: &quot;{\&quot;current_release\&quot;: \&quot;a301d56bb5e6a8818084bd12ab164ed18ae7e3c4dbd3a7515f2f522b81b46457\&quot;}&quot;
+    },
+    {
+      &quot;id&quot;: &quot;E-DNA-5b1489519244953b&quot;,
+      &quot;path&quot;: &quot;demo-1.0.dist-info/entry_points.txt&quot;,
+      &quot;description&quot;: &quot;Release DNA comparison against previous release (not claimed source).&quot;,
+      &quot;source_excerpt&quot;: &quot;{\&quot;previous_release\&quot;: null}&quot;,
+      &quot;artifact_excerpt&quot;: &quot;{\&quot;current_release\&quot;: \&quot;bb40104e363e38ebf90d1d73410b8a67aef44aecbf98e2fb1d1bd07a4f96a46a\&quot;}&quot;
+    },
+    {
+      &quot;id&quot;: &quot;E-DNA-1a9fd11f2dcaf77d&quot;,
+      &quot;path&quot;: &quot;demo/extra.py&quot;,
+      &quot;description&quot;: &quot;Release DNA comparison against previous release (not claimed source).&quot;,
+      &quot;source_excerpt&quot;: &quot;{\&quot;previous_release\&quot;: null}&quot;,
+      &quot;artifact_excerpt&quot;: &quot;{\&quot;current_release\&quot;: \&quot;9378fc554e77c80f81a7dd8d216297f1b43e3c2eca98cdc5d83a938ea77ed4d2\&quot;}&quot;
+    },
+    {
+      &quot;id&quot;: &quot;E-DNA-86c7f9bea803924d&quot;,
+      &quot;path&quot;: &quot;demo/message.py&quot;,
+      &quot;description&quot;: &quot;Release DNA comparison against previous release (not claimed source).&quot;,
+      &quot;source_excerpt&quot;: &quot;{\&quot;previous_release\&quot;: \&quot;f5443387c1e73b533b8e55700403d19fe4a2e7e6a707191e26fa45184b1e33eb\&quot;}&quot;,
+      &quot;artifact_excerpt&quot;: &quot;{\&quot;current_release\&quot;: \&quot;d695345d263e04b23d5fd331fed6c163e02c9341546da3aa7b8caf344070a0e3\&quot;}&quot;
+    },
+    {
+      &quot;id&quot;: &quot;E-DNA-a4a389abcba14382&quot;,
+      &quot;path&quot;: &quot;startup.pth&quot;,
+      &quot;description&quot;: &quot;Release DNA comparison against previous release (not claimed source).&quot;,
+      &quot;source_excerpt&quot;: &quot;{\&quot;previous_release\&quot;: null}&quot;,
+      &quot;artifact_excerpt&quot;: &quot;{\&quot;current_release\&quot;: \&quot;5d5c5c5936a18e6a733e93a66f240a5f54e2605e93bc14a92cd7311fdbfdaad4\&quot;}&quot;
+    },
+    {
+      &quot;id&quot;: &quot;E-DNA-39569d00ac3b9861&quot;,
+      &quot;path&quot;: &quot;&lt;import inventory&gt;&quot;,
+      &quot;description&quot;: &quot;Release DNA comparison against previous release (not claimed source).&quot;,
+      &quot;source_excerpt&quot;: &quot;{\&quot;previous_release\&quot;: null}&quot;,
+      &quot;artifact_excerpt&quot;: &quot;{\&quot;current_release\&quot;: \&quot;socket\&quot;}&quot;
+    },
+    {
+      &quot;id&quot;: &quot;E-DNA-da43c446c4f9ea0c&quot;,
+      &quot;path&quot;: &quot;console_scripts&quot;,
+      &quot;description&quot;: &quot;Release DNA comparison against previous release (not claimed source).&quot;,
+      &quot;source_excerpt&quot;: &quot;{\&quot;previous_release\&quot;: []}&quot;,
+      &quot;artifact_excerpt&quot;: &quot;{\&quot;current_release\&quot;: [\&quot;demo = demo.message:message\&quot;]}&quot;
+    },
+    {
+      &quot;id&quot;: &quot;E-P-4fb73f9cf8803d88&quot;,
+      &quot;path&quot;: &quot;&lt;policy input statuses&gt;&quot;,
+      &quot;description&quot;: &quot;Deterministic policy input statuses; not authenticated report signing.&quot;,
+      &quot;source_excerpt&quot;: null,
+      &quot;artifact_excerpt&quot;: &quot;{\&quot;analysis_status\&quot;: \&quot;COMPLETE\&quot;, \&quot;configured_checks\&quot;: {\&quot;block_high\&quot;: false, \&quot;require_complete\&quot;: true, \&quot;require_verified_provenance\&quot;: false, \&quot;review_medium\&quot;: true}, \&quot;provenance_status\&quot;: \&quot;NOT_CHECKED\&quot;, \&quot;record_status\&quot;: \&quot;VALID\&quot;}&quot;
+    }
+  ],
+  &quot;release_fingerprint&quot;: {
+    &quot;version&quot;: &quot;1&quot;,
+    &quot;artifact_files&quot;: {
+      &quot;demo-1.0.dist-info/METADATA&quot;: &quot;34aa27a6064f958b41b781a217f290fd0ab5f9651e2b6e4acdab341b7b93c305&quot;,
+      &quot;demo-1.0.dist-info/RECORD&quot;: &quot;a301d56bb5e6a8818084bd12ab164ed18ae7e3c4dbd3a7515f2f522b81b46457&quot;,
+      &quot;demo-1.0.dist-info/WHEEL&quot;: &quot;205886c1b3281160c3261865e18f8996b352f66ee0f53614262f1504350421db&quot;,
+      &quot;demo-1.0.dist-info/entry_points.txt&quot;: &quot;bb40104e363e38ebf90d1d73410b8a67aef44aecbf98e2fb1d1bd07a4f96a46a&quot;,
+      &quot;demo/__init__.py&quot;: &quot;85e97db552d4e230984f6b89188b90b88f75bcf7531e9a7901a391b59fca5fea&quot;,
+      &quot;demo/extra.py&quot;: &quot;9378fc554e77c80f81a7dd8d216297f1b43e3c2eca98cdc5d83a938ea77ed4d2&quot;,
+      &quot;demo/message.py&quot;: &quot;d695345d263e04b23d5fd331fed6c163e02c9341546da3aa7b8caf344070a0e3&quot;,
+      &quot;startup.pth&quot;: &quot;5d5c5c5936a18e6a733e93a66f240a5f54e2605e93bc14a92cd7311fdbfdaad4&quot;
+    },
+    &quot;imports&quot;: [
+      &quot;socket&quot;
+    ],
+    &quot;surfaces&quot;: [
+      {
+        &quot;kind&quot;: &quot;NETWORK_CAPABILITY&quot;,
+        &quot;path&quot;: &quot;demo/message.py&quot;,
+        &quot;symbol&quot;: &quot;import: socket&quot;,
+        &quot;evidence_ids&quot;: [
+          &quot;E-S-49b99f97739f9294&quot;
+        ]
+      },
+      {
+        &quot;kind&quot;: &quot;PTH_EXECUTION&quot;,
+        &quot;path&quot;: &quot;startup.pth&quot;,
+        &quot;symbol&quot;: &quot;import demo; demo.VALUE = 2&quot;,
+        &quot;evidence_ids&quot;: [
+          &quot;E-S-3c075a4785b6aefd&quot;
+        ]
+      }
+    ],
+    &quot;declarations&quot;: [
+      {
+        &quot;field&quot;: &quot;dependencies&quot;,
+        &quot;values&quot;: [],
+        &quot;path&quot;: &quot;demo-1.0.dist-info/METADATA&quot;,
+        &quot;evidence_ids&quot;: [
+          &quot;E-b18dced87388d389&quot;
+        ]
+      },
+      {
+        &quot;field&quot;: &quot;console_scripts&quot;,
+        &quot;values&quot;: [
+          &quot;demo = demo.message:message&quot;
+        ],
+        &quot;path&quot;: &quot;demo-1.0.dist-info/entry_points.txt&quot;,
+        &quot;evidence_ids&quot;: [
+          &quot;E-9d839cc01c056d2d&quot;
+        ]
+      },
+      {
+        &quot;field&quot;: &quot;gui_scripts&quot;,
+        &quot;values&quot;: [],
+        &quot;path&quot;: &quot;demo-1.0.dist-info/entry_points.txt&quot;,
+        &quot;evidence_ids&quot;: [
+          &quot;E-9d839cc01c056d2d&quot;
+        ]
+      }
+    ],
+    &quot;coverage_limited&quot;: false
+  },
+  &quot;impact_truncated&quot;: false,
+  &quot;impact_relationships&quot;: [
+    {
+      &quot;origin&quot;: &quot;demo/message.py&quot;,
+      &quot;target&quot;: &quot;NETWORK_CAPABILITY: import: socket&quot;,
+      &quot;relationship&quot;: &quot;contains static indicator; execution not established&quot;,
+      &quot;evidence_ids&quot;: [
+        &quot;E-S-49b99f97739f9294&quot;
+      ]
+    },
+    {
+      &quot;origin&quot;: &quot;Python site initialization (conditional)&quot;,
+      &quot;target&quot;: &quot;startup.pth&quot;,
+      &quot;relationship&quot;: &quot;may process/import if installed and enabled&quot;,
+      &quot;evidence_ids&quot;: [
+        &quot;E-S-3c075a4785b6aefd&quot;
+      ]
+    },
+    {
+      &quot;origin&quot;: &quot;startup.pth&quot;,
+      &quot;target&quot;: &quot;demo/__init__.py&quot;,
+      &quot;relationship&quot;: &quot;directive names this module; reachability unverified&quot;,
+      &quot;evidence_ids&quot;: [
+        &quot;E-S-3c075a4785b6aefd&quot;
+      ]
+    },
+    {
+      &quot;origin&quot;: &quot;Entry point demo&quot;,
+      &quot;target&quot;: &quot;demo/message.py&quot;,
+      &quot;relationship&quot;: &quot;declares target; invocation not established&quot;,
+      &quot;evidence_ids&quot;: [
+        &quot;E-9d839cc01c056d2d&quot;
+      ]
+    }
+  ],
+  &quot;dna_baseline&quot;: {
+    &quot;scan_id&quot;: &quot;d323df19da2a3d0657b59c8a5fc8d063&quot;,
+    &quot;artifact_sha256&quot;: &quot;f1b275eed09cf11b2e1c65e784756146ec6b4d7a9828c818c81a058620af22f4&quot;,
+    &quot;package_version&quot;: &quot;1.0&quot;,
+    &quot;current_version&quot;: &quot;1.0&quot;,
+    &quot;coverage_limited&quot;: false,
+    &quot;meaning&quot;: &quot;First observed only against this supplied baseline, not all releases or trained ML.&quot;
+  },
+  &quot;historical_anomalies&quot;: [
+    {
+      &quot;id&quot;: &quot;DNA-d9ba126cb8cbe410&quot;,
+      &quot;kind&quot;: &quot;FILE_CHANGED&quot;,
+      &quot;path&quot;: &quot;demo-1.0.dist-info/RECORD&quot;,
+      &quot;previous&quot;: &quot;650e0e0960d972ce4599b6212a3543cbc3826bfe8ed9f1481cf5b56345c94832&quot;,
+      &quot;current&quot;: &quot;a301d56bb5e6a8818084bd12ab164ed18ae7e3c4dbd3a7515f2f522b81b46457&quot;,
+      &quot;severity&quot;: &quot;INFORMATIONAL&quot;,
+      &quot;evidence_ids&quot;: [
+        &quot;E-DNA-d9ba126cb8cbe410&quot;
+      ],
+      &quot;coverage_limited&quot;: false,
+      &quot;explanation&quot;: &quot;Observed in inspected data relative to the selected baseline; execution and first-ever occurrence are not established.&quot;
+    },
+    {
+      &quot;id&quot;: &quot;DNA-5b1489519244953b&quot;,
+      &quot;kind&quot;: &quot;FILE_ADDED&quot;,
+      &quot;path&quot;: &quot;demo-1.0.dist-info/entry_points.txt&quot;,
+      &quot;previous&quot;: null,
+      &quot;current&quot;: &quot;bb40104e363e38ebf90d1d73410b8a67aef44aecbf98e2fb1d1bd07a4f96a46a&quot;,
+      &quot;severity&quot;: &quot;INFORMATIONAL&quot;,
+      &quot;evidence_ids&quot;: [
+        &quot;E-DNA-5b1489519244953b&quot;
+      ],
+      &quot;coverage_limited&quot;: false,
+      &quot;explanation&quot;: &quot;Observed in inspected data relative to the selected baseline; execution and first-ever occurrence are not established.&quot;
+    },
+    {
+      &quot;id&quot;: &quot;DNA-1a9fd11f2dcaf77d&quot;,
+      &quot;kind&quot;: &quot;FILE_ADDED&quot;,
+      &quot;path&quot;: &quot;demo/extra.py&quot;,
+      &quot;previous&quot;: null,
+      &quot;current&quot;: &quot;9378fc554e77c80f81a7dd8d216297f1b43e3c2eca98cdc5d83a938ea77ed4d2&quot;,
+      &quot;severity&quot;: &quot;INFORMATIONAL&quot;,
+      &quot;evidence_ids&quot;: [
+        &quot;E-DNA-1a9fd11f2dcaf77d&quot;
+      ],
+      &quot;coverage_limited&quot;: false,
+      &quot;explanation&quot;: &quot;Observed in inspected data relative to the selected baseline; execution and first-ever occurrence are not established.&quot;
+    },
+    {
+      &quot;id&quot;: &quot;DNA-86c7f9bea803924d&quot;,
+      &quot;kind&quot;: &quot;FILE_CHANGED&quot;,
+      &quot;path&quot;: &quot;demo/message.py&quot;,
+      &quot;previous&quot;: &quot;f5443387c1e73b533b8e55700403d19fe4a2e7e6a707191e26fa45184b1e33eb&quot;,
+      &quot;current&quot;: &quot;d695345d263e04b23d5fd331fed6c163e02c9341546da3aa7b8caf344070a0e3&quot;,
+      &quot;severity&quot;: &quot;INFORMATIONAL&quot;,
+      &quot;evidence_ids&quot;: [
+        &quot;E-DNA-86c7f9bea803924d&quot;
+      ],
+      &quot;coverage_limited&quot;: false,
+      &quot;explanation&quot;: &quot;Observed in inspected data relative to the selected baseline; execution and first-ever occurrence are not established.&quot;
+    },
+    {
+      &quot;id&quot;: &quot;DNA-a4a389abcba14382&quot;,
+      &quot;kind&quot;: &quot;FILE_ADDED&quot;,
+      &quot;path&quot;: &quot;startup.pth&quot;,
+      &quot;previous&quot;: null,
+      &quot;current&quot;: &quot;5d5c5c5936a18e6a733e93a66f240a5f54e2605e93bc14a92cd7311fdbfdaad4&quot;,
+      &quot;severity&quot;: &quot;INFORMATIONAL&quot;,
+      &quot;evidence_ids&quot;: [
+        &quot;E-DNA-a4a389abcba14382&quot;
+      ],
+      &quot;coverage_limited&quot;: false,
+      &quot;explanation&quot;: &quot;Observed in inspected data relative to the selected baseline; execution and first-ever occurrence are not established.&quot;
+    },
+    {
+      &quot;id&quot;: &quot;DNA-41b2144721c23997&quot;,
+      &quot;kind&quot;: &quot;FIRST_OBSERVED_NETWORK_CAPABILITY&quot;,
+      &quot;path&quot;: &quot;demo/message.py&quot;,
+      &quot;previous&quot;: null,
+      &quot;current&quot;: &quot;import: socket&quot;,
+      &quot;severity&quot;: &quot;MEDIUM&quot;,
+      &quot;evidence_ids&quot;: [
+        &quot;E-S-49b99f97739f9294&quot;
+      ],
+      &quot;coverage_limited&quot;: false,
+      &quot;explanation&quot;: &quot;Observed in inspected data relative to the selected baseline; execution and first-ever occurrence are not established.&quot;
+    },
+    {
+      &quot;id&quot;: &quot;DNA-19815d96206144e2&quot;,
+      &quot;kind&quot;: &quot;FIRST_OBSERVED_PTH_EXECUTION&quot;,
+      &quot;path&quot;: &quot;startup.pth&quot;,
+      &quot;previous&quot;: null,
+      &quot;current&quot;: &quot;import demo; demo.VALUE = 2&quot;,
+      &quot;severity&quot;: &quot;HIGH&quot;,
+      &quot;evidence_ids&quot;: [
+        &quot;E-S-3c075a4785b6aefd&quot;
+      ],
+      &quot;coverage_limited&quot;: false,
+      &quot;explanation&quot;: &quot;Observed in inspected data relative to the selected baseline; execution and first-ever occurrence are not established.&quot;
+    },
+    {
+      &quot;id&quot;: &quot;DNA-39569d00ac3b9861&quot;,
+      &quot;kind&quot;: &quot;FIRST_OBSERVED_IMPORT&quot;,
+      &quot;path&quot;: &quot;&lt;import inventory&gt;&quot;,
+      &quot;previous&quot;: null,
+      &quot;current&quot;: &quot;socket&quot;,
+      &quot;severity&quot;: &quot;INFORMATIONAL&quot;,
+      &quot;evidence_ids&quot;: [
+        &quot;E-DNA-39569d00ac3b9861&quot;
+      ],
+      &quot;coverage_limited&quot;: false,
+      &quot;explanation&quot;: &quot;Observed in inspected data relative to the selected baseline; execution and first-ever occurrence are not established.&quot;
+    },
+    {
+      &quot;id&quot;: &quot;DNA-da43c446c4f9ea0c&quot;,
+      &quot;kind&quot;: &quot;DECLARATION_CHANGED&quot;,
+      &quot;path&quot;: &quot;console_scripts&quot;,
+      &quot;previous&quot;: [],
+      &quot;current&quot;: [
+        &quot;demo = demo.message:message&quot;
+      ],
+      &quot;severity&quot;: &quot;MEDIUM&quot;,
+      &quot;evidence_ids&quot;: [
+        &quot;E-DNA-da43c446c4f9ea0c&quot;
+      ],
+      &quot;coverage_limited&quot;: false,
+      &quot;explanation&quot;: &quot;Observed in inspected data relative to the selected baseline; execution and first-ever occurrence are not established.&quot;
+    }
+  ],
+  &quot;model_status&quot;: &quot;NOT_CONFIGURED&quot;,
+  &quot;model_details&quot;: {
+    &quot;reason&quot;: &quot;Historical context changed; rerun optional local AI.&quot;
+  },
+  &quot;ai_assessments&quot;: [],
+  &quot;policy_decision&quot;: {
+    &quot;decision&quot;: &quot;REVIEW&quot;,
+    &quot;reasons&quot;: [
+      {
+        &quot;rule&quot;: &quot;HIGH_FINDINGS&quot;,
+        &quot;explanation&quot;: &quot;High-priority static findings require review; they do not prove an attack.&quot;,
+        &quot;finding_ids&quot;: [
+          &quot;F-S-3c075a4785b6aefd&quot;
+        ],
+        &quot;evidence_ids&quot;: [
+          &quot;E-S-3c075a4785b6aefd&quot;
+        ]
+      },
+      {
+        &quot;rule&quot;: &quot;MEDIUM_FINDINGS&quot;,
+        &quot;explanation&quot;: &quot;Configured checks require review of unexplained differences or capabilities.&quot;,
+        &quot;finding_ids&quot;: [
+          &quot;F-990c854162472d40&quot;,
+          &quot;F-f7bb344e28a9cacf&quot;,
+          &quot;F-94b3806424ff871b&quot;,
+          &quot;F-S-49b99f97739f9294&quot;,
+          &quot;F-M-797ff787bbe3f9a4&quot;
+        ],
+        &quot;evidence_ids&quot;: [
+          &quot;E-990c854162472d40&quot;,
+          &quot;E-f7bb344e28a9cacf&quot;,
+          &quot;E-94b3806424ff871b&quot;,
+          &quot;E-S-49b99f97739f9294&quot;,
+          &quot;E-9d839cc01c056d2d&quot;
+        ]
+      },
+      {
+        &quot;rule&quot;: &quot;HISTORICAL_CHANGES&quot;,
+        &quot;explanation&quot;: &quot;First-observed historical indicators/declarations require review within the reported coverage limits.&quot;,
+        &quot;finding_ids&quot;: [],
+        &quot;evidence_ids&quot;: [
+          &quot;E-S-49b99f97739f9294&quot;,
+          &quot;E-S-3c075a4785b6aefd&quot;,
+          &quot;E-DNA-da43c446c4f9ea0c&quot;
+        ]
+      }
+    ],
+    &quot;config&quot;: {
+      &quot;require_complete&quot;: true,
+      &quot;review_medium&quot;: true,
+      &quot;block_high&quot;: false,
+      &quot;require_verified_provenance&quot;: false
+    },
+    &quot;limitation&quot;: &quot;Evaluates supplied report facts under configured checks, not authenticity, safety, signatures or runtime behavior.&quot;
+  },
+  &quot;limitations&quot;: [
+    &quot;Local user-selected source is not authenticated and is not tied to a repository commit.&quot;,
+    &quot;Static inspection only: no target code was executed. Matching files do not prove safety.&quot;,
+    &quot;RECORD checks internal consistency only. A rewritten valid RECORD does not authenticate a publisher or establish safety.&quot;,
+    &quot;Static Python rules are syntactic: aliases, local modules, shadowing, indirect calls, runtime code and reachability are not resolved.&quot;,
+    &quot;Python, PTH and metadata parsing is limited to 128 KiB per file and 20,000 AST nodes. Unparsed files make analysis PARTIAL.&quot;,
+    &quot;Source metadata outside the selected prefix is not used; missing or dynamic declarations leave metadata comparisons UNKNOWN.&quot;,
+    &quot;Provenance is not authenticated. AI and historical comparisons run only when requested; consult their explicit statuses. Release Gate evaluates configured deterministic checks.&quot;,
+    &quot;Packaging metadata is identified by path only; generated content is not verified.&quot;,
+    &quot;Source-prefix selection defines scope. Files outside that prefix are counted but excluded.&quot;,
+    &quot;Text excerpts and diffs are bounded previews; SHA-256 hashes cover full inspected contents.&quot;,
+    &quot;No in-scope source metadata baseline: dependency/entry-point changes cannot be established. Choose a source root containing static project metadata to compare declarations.&quot;
+  ]
+}</pre></details></body></html>

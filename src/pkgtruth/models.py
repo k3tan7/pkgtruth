@@ -87,6 +87,20 @@ class MetadataChange(StrictModel):
     evidence_ids: list[str]
 
 
+class PolicyReason(StrictModel):
+    rule: str
+    explanation: str
+    finding_ids: list[str]
+    evidence_ids: list[str]
+
+
+class PolicyDecision(StrictModel):
+    decision: Literal['ALLOW', 'REVIEW', 'BLOCK']
+    reasons: list[PolicyReason]
+    config: dict
+    limitation: str
+
+
 class Report(StrictModel):
     schema_version: Literal['1.0', '1.1', '1.2'] = '1.2'
     tool_version: str = '0.3.0'
@@ -107,17 +121,19 @@ class Report(StrictModel):
     record_check: RecordCheck = Field(default_factory=RecordCheck)
     behavior_indicators: list[BehaviorIndicator] = Field(default_factory=list)
     metadata_changes: list[MetadataChange] = Field(default_factory=list)
-    provenance_status: Literal['NOT_CHECKED'] = 'NOT_CHECKED'
+    provenance_status: Literal['NOT_CHECKED', 'VERIFIED', 'INVALID', 'UNAVAILABLE', 'UNRESOLVED'] = 'NOT_CHECKED'
     coverage: Coverage
     findings: list[Finding]
     evidence: list[Evidence]
     release_fingerprint: dict = Field(default_factory=dict)
+    impact_truncated: bool = False
+    impact_relationships: list[dict] = Field(default_factory=list)
     dna_baseline: dict = Field(default_factory=dict)
     historical_anomalies: list[dict] = Field(default_factory=list)
     model_status: Literal['NOT_CONFIGURED', 'VALIDATED', 'REJECTED', 'UNAVAILABLE'] = 'NOT_CONFIGURED'
     model_details: dict = Field(default_factory=dict)
     ai_assessments: list[dict] = Field(default_factory=list)
-    policy_decision: None = None
+    policy_decision: PolicyDecision | None = None
     limitations: list[str]
 
 
@@ -125,7 +141,7 @@ class Report(StrictModel):
     def serialize_report(self, handler):
         data = handler(self)
         if self.schema_version in ('1.0', '1.1'):
-            for field in ('package_name', 'package_version', 'retrieval', 'model_details', 'release_fingerprint', 'dna_baseline'):
+            for field in ('package_name', 'package_version', 'retrieval', 'model_details', 'release_fingerprint', 'dna_baseline', 'impact_relationships', 'impact_truncated'):
                 data.pop(field, None)
         if self.schema_version == '1.0':
             # Preserve the strict original wire format when re-exporting stored reports.

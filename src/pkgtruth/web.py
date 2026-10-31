@@ -6,6 +6,10 @@ import hmac
 import re
 import secrets
 import sqlite3
+import time
+import threading
+from contextlib import asynccontextmanager
+from collections import deque
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
@@ -37,6 +41,10 @@ class LocalBoundary:
             return await JSONResponse({'detail': 'Local single-user access only'}, status_code=403)(scope, receive, send)
         headers = dict(scope.get('headers', []))
         if scope['method'] == 'POST':
+            origin=headers.get(b'origin')
+            expected=(scope.get('scheme','http')+'://'+headers.get(b'host',b'').decode('latin1')).encode('latin1')
+            if (origin and origin != expected) or headers.get(b'sec-fetch-site') == b'cross-site':
+                return await JSONResponse({'detail':'Cross-origin request forbidden'},status_code=403)(scope,receive,send)
             try:
                 length = int(headers.get(b'content-length', b'0'))
             except ValueError:
@@ -72,22 +80,32 @@ class LocalBoundary:
 
 
 def create_app(store: ReportStore | None = None) -> FastAPI:
-    app = FastAPI(title='pkgtruth', version='0.3.0', docs_url=None, redoc_url=None)
+    reports = store or ReportStore()
+    from .jobs import JobRunner
+    runner = JobRunner(reports)
+    @asynccontextmanager
+    async def lifespan(app):
+        yield
+        runner.close()
+    app = FastAPI(title='pkgtruth', version='0.3.0', docs_url=None, redoc_url=None, lifespan=lifespan)
+    lookup_times = deque()
+    lookup_guard = threading.Lock()
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=['127.0.0.1', 'localhost', '[::1]', 'testserver'])
     app.add_middleware(LocalBoundary)
     app.mount('/static', StaticFiles(directory=ROOT / 'static'), name='static')
     templates = Jinja2Templates(directory=ROOT / 'templates')
-    reports = store or ReportStore()
     scan_lock = asyncio.Lock()
 
     @app.middleware('http')
     async def headers(request: Request, call_next):
         response = await call_next(request)
-        response.headers.update({
+        security_headers = {
             'Content-Security-Policy': "default-src 'self'; script-src 'self'; style-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
             'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer',
             'Cache-Control': 'no-store', 'X-Frame-Options': 'DENY',
-        })
+        }
+        for key, value in security_headers.items():
+            response.headers.setdefault(key, value)
         return response
 
     @app.exception_handler(sqlite3.Error)
@@ -102,6 +120,8 @@ def create_app(store: ReportStore | None = None) -> FastAPI:
 
     @app.get('/health')
     def health():
+        with reports.connect() as db:
+            db.execute('SELECT 1').fetchone()
         return {'status': 'ok', 'mode': 'local-single-user'}
 
     @app.get('/', response_class=HTMLResponse)
@@ -136,8 +156,10 @@ def create_app(store: ReportStore | None = None) -> FastAPI:
                         raise InputError('Expected a .whl artifact and a .zip source archive')
                     wheel_bytes = await wheel.read(MAX_ARCHIVE + 1)
                     source_bytes = await source.read(MAX_ARCHIVE + 1)
-                    report = await run_in_threadpool(analyze, wheel_bytes, source_bytes,
+                    report = await run_in_threadpool(runner.run_sync, analyze, wheel_bytes, source_bytes,
                         artifact_name=wheel.filename or 'local.whl', source_prefix=prefix)
+                    from .policy import apply_policy
+                    report = apply_policy(report, reports.get_policy())
                     await run_in_threadpool(reports.save, report)
                 return RedirectResponse(f'/scans/{report.scan_id}', status_code=303)
             except (InputError, OSError) as exc:
@@ -147,6 +169,13 @@ def create_app(store: ReportStore | None = None) -> FastAPI:
 
     @app.get('/packages', response_class=HTMLResponse)
     def packages(request: Request, name: str = ''):
+        with lookup_guard:
+            now=time.monotonic()
+            while lookup_times and now-lookup_times[0]>60:
+                lookup_times.popleft()
+            if len(lookup_times)>=20:
+                raise HTTPException(429,'Package lookup limit reached; retry in a minute')
+            lookup_times.append(now)
         from .pypi import project_versions
         project, error = None, None
         if name:
@@ -170,13 +199,102 @@ def create_app(store: ReportStore | None = None) -> FastAPI:
                 if not isinstance(token, str) or not cookie or not hmac.compare_digest(token.encode(), cookie.encode()):
                     raise HTTPException(403, 'Invalid form token')
                 try:
-                    report = await run_in_threadpool(scan_pypi, form.get('name'), form.get('version'))
+                    report = await run_in_threadpool(runner.run_sync, scan_pypi, form.get('name'), form.get('version'))
+                    from .policy import apply_policy
+                    report = apply_policy(report, reports.get_policy())
                     await run_in_threadpool(reports.save, report)
                 except (InputError, OSError) as exc:
                     response = page(request, 'packages.html', project=None, error=str(exc))
                     response.status_code = 422
                     return response
         return RedirectResponse(f'/scans/{report.scan_id}', status_code=303)
+
+    async def protected_fields(request, max_fields=3):
+        if request.headers.get('origin') not in (None,str(request.base_url).rstrip('/')) or request.headers.get('sec-fetch-site')=='cross-site':
+            raise HTTPException(403,'Cross-origin request forbidden')
+        async with request.form(max_files=0,max_fields=max_fields,max_part_size=2048) as form:
+            token,cookie=form.get('csrf'),request.cookies.get('csrf')
+            if not isinstance(token,str) or not cookie or not hmac.compare_digest(token.encode(),cookie.encode()):
+                raise HTTPException(403,'Invalid form token')
+            return dict(form)
+
+    @app.post('/jobs/pypi')
+    async def queue_pypi(request: Request):
+        from .pypi import package_name,version_name
+        form=await protected_fields(request)
+        try:
+            payload={'name':package_name(form.get('name')),'version':version_name(form.get('version'))}
+            job_id=runner.submit('pypi',payload)
+        except InputError as exc:
+            raise HTTPException(429 if 'queue' in str(exc) else 422,str(exc)) from exc
+        return RedirectResponse('/jobs/'+job_id,status_code=303)
+
+    @app.post('/jobs/ai')
+    async def queue_ai(request: Request):
+        form=await protected_fields(request,2)
+        report=lookup(str(form.get('scan_id','')))
+        try:
+            job_id=runner.submit('ai',{'scan_id':report.scan_id})
+        except InputError as exc:
+            raise HTTPException(429,str(exc)) from exc
+        return RedirectResponse('/jobs/'+job_id,status_code=303)
+
+    def lookup_job(job_id):
+        if not re.fullmatch('[a-f0-9]{32}',job_id):
+            raise HTTPException(404,'Job not found')
+        job=runner.get(job_id)
+        if not job: raise HTTPException(404,'Job not found')
+        return job
+
+    @app.get('/jobs/{job_id}',response_class=HTMLResponse)
+    def job_page(request: Request,job_id: str):
+        return page(request,'job.html',job=lookup_job(job_id))
+
+    @app.get('/jobs/{job_id}/status')
+    def job_status(job_id: str):
+        return lookup_job(job_id)
+
+    @app.get('/watchlist',response_class=HTMLResponse)
+    def watchlist_page(request: Request):
+        return page(request,'watchlist.html',watched=reports.watchlist(),events=reports.watch_events(),results=None)
+
+    @app.post('/watchlist')
+    async def add_watched(request: Request):
+        form=await protected_fields(request,2)
+        try: reports.add_watch(form.get('name'))
+        except InputError as exc: raise HTTPException(422,str(exc)) from exc
+        return RedirectResponse('/watchlist',status_code=303)
+
+    @app.post('/watchlist/check',response_class=HTMLResponse)
+    async def check_watched(request: Request):
+        from .watch import watch_once
+        await protected_fields(request,1)
+        if scan_lock.locked(): raise HTTPException(429,'Investigation in progress')
+        async with scan_lock:
+            results=await run_in_threadpool(runner.run_sync,watch_once,reports)
+        return page(request,'watchlist.html',watched=reports.watchlist(),events=reports.watch_events(),results=results)
+
+    @app.get('/policy', response_class=HTMLResponse)
+    def policy_settings(request: Request):
+        return page(request, 'policy.html', config=reports.get_policy(), error=None)
+
+    @app.post('/policy')
+    async def update_policy(request: Request):
+        from .policy import PolicyConfig
+        if request.headers.get('origin') not in (None, str(request.base_url).rstrip('/')):
+            raise HTTPException(403, 'Cross-origin request forbidden')
+        async with request.form(max_files=0, max_fields=5, max_part_size=2048) as form:
+            token, cookie=form.get('csrf'),request.cookies.get('csrf')
+            if not isinstance(token,str) or not cookie or not hmac.compare_digest(token.encode(),cookie.encode()):
+                raise HTTPException(403,'Invalid form token')
+            config=PolicyConfig(**{key:key in form for key in PolicyConfig.model_fields})
+            reports.save_policy(config)
+        return RedirectResponse('/policy',status_code=303)
+
+    @app.get('/scans/{scan_id}/report.html', response_class=HTMLResponse)
+    def html_export(scan_id: str):
+        from .capsule import capsule_html
+        return HTMLResponse(capsule_html(lookup(scan_id)),headers={'Content-Disposition':f'attachment; filename="pkgtruth-{scan_id}.html"', 'Content-Security-Policy':"default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"})
 
     @app.post('/scans/{scan_id}/dna')
     async def dna_comparison(request: Request, scan_id: str):
@@ -189,7 +307,7 @@ def create_app(store: ReportStore | None = None) -> FastAPI:
                 raise HTTPException(403, 'Invalid form token')
             baseline = lookup(str(form.get('baseline', '')))
         try:
-            report = await run_in_threadpool(compare_releases, baseline, lookup(scan_id))
+            report = await run_in_threadpool(runner.run_sync, compare_releases, baseline, lookup(scan_id))
         except InputError as exc:
             raise HTTPException(422, str(exc)) from exc
         await run_in_threadpool(reports.save, report)
@@ -207,7 +325,7 @@ def create_app(store: ReportStore | None = None) -> FastAPI:
         if scan_lock.locked():
             raise HTTPException(429, 'An investigation is already running')
         async with scan_lock:
-            report = await run_in_threadpool(investigate, lookup(scan_id))
+            report = await run_in_threadpool(runner.run_sync, investigate, lookup(scan_id))
             await run_in_threadpool(reports.save, report)
         return RedirectResponse(f'/scans/{scan_id}', status_code=303)
 
@@ -222,7 +340,7 @@ def create_app(store: ReportStore | None = None) -> FastAPI:
     @app.get('/scans/{scan_id}', response_class=HTMLResponse)
     def result(request: Request, scan_id: str):
         report = lookup(scan_id)
-        return page(request, 'result.html', report=report, evidence_lookup={item.id: item for item in report.evidence}, baselines=[r for r in reports.recent() if r.scan_id != scan_id and r.release_fingerprint])
+        return page(request, 'result.html', report=report, evidence_lookup={item.id: item for item in report.evidence}, baselines=[r for r in reports.recent() if r.scan_id != scan_id and r.release_fingerprint and (not report.package_name or not r.package_name or r.package_name == report.package_name)])
 
     @app.get('/scans/{scan_id}/report.json')
     def export(scan_id: str):

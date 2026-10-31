@@ -176,16 +176,27 @@ def scan_pypi(name, version, *, fetcher=None):
         else:
             notes.append('No unambiguous claimed GitHub repository in package metadata.')
         report = analyze(wheel, source, artifact_name=filename, source_prefix=prefix)
+        from packaging.version import Version
+        identity_verified = report.package_name is not None and report.package_version is not None
+        if identity_verified:
+            try:
+                if package_name(report.package_name) != name or Version(report.package_version) != Version(version):
+                    raise InputError('Wheel metadata identity does not match the requested release')
+            except ValueError as exc:
+                raise InputError('Wheel metadata identity does not match the requested release') from exc
+        else:
+            notes.append('Wheel metadata identity could not be independently parsed.')
         report.package_name, report.package_version = name, version
         report.source_commit = commit
         report.source_resolution = 'PYPI_TAG_UNVERIFIED' if source else 'ARTIFACT_ONLY'
         report.retrieval = {'registry': 'https://pypi.org', 'artifact_url': url, 'registry_sha256': expected,
-            'registry_digest_verified': True, 'claimed_repository': f'https://github.com/{repo}' if repo else None,
+            'registry_digest_verified': True, 'wheel_metadata_identity_verified': identity_verified, 'claimed_repository': f'https://github.com/{repo}' if repo else None,
             'source_tag': tag, 'source_resolution_method': resolution_method, 'source_archive_sha256': hashlib.sha256(source).hexdigest() if source else None, 'source_archive_inspected': source is not None,
             'source_correspondence': 'TAG_MATCH_UNVERIFIED' if commit else 'UNRESOLVED'}
         report.limitations.extend(notes + ['A matching GitHub tag is a claimed correspondence, not authenticated provenance or a reproducible-build guarantee.'])
         report.scan_id = hashlib.sha256(f'pypi:{report.scan_id}:{name}:{version}:{commit}'.encode()).hexdigest()[:32]
-        return report
+        from .policy import apply_policy
+        return apply_policy(report)
     finally:
         if own:
             fetcher.close()

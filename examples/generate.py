@@ -6,6 +6,8 @@ from pathlib import Path
 
 from pkgtruth.analysis import analyze
 from pkgtruth.models import Report
+from pkgtruth.dna import compare_releases
+from pkgtruth.capsule import capsule_html
 
 ROOT = Path(__file__).resolve().parent
 
@@ -35,6 +37,7 @@ def main():
         'demo-1.0.dist-info/METADATA': b'Metadata-Version: 2.1\nName: demo\nVersion: 1.0\n',
         'demo-1.0.dist-info/WHEEL': b'Wheel-Version: 1.0\nGenerator: pkgtruth-example\nRoot-Is-Purelib: true\nTag: py3-none-any\n',
     }
+    reports = {}
     for label in ('clean', 'tampered', 'startup', 'record-mismatch'):
         payload = {**source, **metadata}
         if label in ('tampered', 'startup', 'record-mismatch'):
@@ -61,7 +64,12 @@ def main():
         wheel = archive(payload)
         (ROOT / f'{label}.whl').write_bytes(wheel)
         report = analyze(wheel, archive(source), artifact_name=f'{label}.whl')
+        reports[label] = report
         (ROOT / f'{label}.report.json').write_text(report.model_dump_json(indent=2) + '\n')
+    # Same-version snapshots honestly model artifact republication, not invented release versions.
+    dna = compare_releases(reports['clean'], reports['startup'])
+    (ROOT / 'dna.report.json').write_text(dna.model_dump_json(indent=2) + '\n')
+    (ROOT / 'dna.capsule.html').write_text(capsule_html(dna))
     (ROOT.parent / 'docs' / 'report.schema.json').write_text(json.dumps(Report.model_json_schema(), indent=2) + '\n')
 
 

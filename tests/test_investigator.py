@@ -98,3 +98,10 @@ def test_web_uses_same_local_investigator(report, monkeypatch, tmp_path):
         assert data['model_status'] == 'VALIDATED'
         assert data['artifact_sha256'] == report.artifact_sha256
         assert 'A startup directive' in client.get(response.headers['location']).text
+
+
+def test_oversized_model_response_is_rejected(report):
+    transport=httpx.MockTransport(lambda r:httpx.Response(200,content=b'x'*70000))
+    with httpx.Client(base_url='http://127.0.0.1:11434',transport=transport) as client:
+        result=investigate(report,client=client)
+    assert result.model_status=='REJECTED' and result.findings==report.findings

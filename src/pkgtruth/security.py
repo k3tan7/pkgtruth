@@ -364,3 +364,17 @@ def inspect_security(artifact, source, differences, evidence, findings, deadline
     if published and not reviewed:
         notes.append('No in-scope source metadata baseline: dependency/entry-point changes cannot be established. Choose a source root containing static project metadata to compare declarations.')
     return record, indicators, changes, partial, notes, imports['artifact']
+
+
+def wheel_identity(files):
+    paths=[p for p in files if len(p.split('/'))==2 and p.endswith('.dist-info/METADATA')]
+    if len(paths)!=1 or len(files[paths[0]])>MAX_PARSE:
+        return None,None
+    try:
+        metadata=BytesParser(policy=policy.default).parsebytes(files[paths[0]],headersonly=True)
+        if metadata.defects or any(len(metadata.get_all(k,[]))!=1 for k in ('Name','Version')):
+            return None,None
+        name,version=str(metadata['Name']).strip(),str(metadata['Version']).strip()
+        return (name,version) if name and version and max(len(name),len(version))<=100 else (None,None)
+    except (ValueError,UnicodeError):
+        return None,None

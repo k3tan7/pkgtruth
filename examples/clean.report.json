@@ -9,8 +9,8 @@
   "artifact_sha256": "f1b275eed09cf11b2e1c65e784756146ec6b4d7a9828c818c81a058620af22f4",
   "source_tree_sha256": "6e23e2147fdd9ad2c363af9c8f650dc3c42cf253c2fb4756f9f6d12a33fe3b45",
   "source_commit": null,
-  "package_name": null,
-  "package_version": null,
+  "package_name": "demo",
+  "package_version": "1.0",
   "retrieval": {},
   "mappings": [
     {
@@ -207,6 +207,13 @@
       "description": "RECORD consistency VALID: 4 file digests checked. This is not provenance verification.",
       "source_excerpt": null,
       "artifact_excerpt": ""
+    },
+    {
+      "id": "E-P-4ce7e4938c46f10d",
+      "path": "<policy input statuses>",
+      "description": "Deterministic policy input statuses; not authenticated report signing.",
+      "source_excerpt": null,
+      "artifact_excerpt": "{\"analysis_status\": \"COMPLETE\", \"configured_checks\": {\"block_high\": false, \"require_complete\": true, \"require_verified_provenance\": false, \"review_medium\": true}, \"provenance_status\": \"NOT_CHECKED\", \"record_status\": \"VALID\"}"
     }
   ],
   "release_fingerprint": {
@@ -248,12 +255,33 @@
     ],
     "coverage_limited": false
   },
+  "impact_truncated": false,
+  "impact_relationships": [],
   "dna_baseline": {},
   "historical_anomalies": [],
   "model_status": "NOT_CONFIGURED",
   "model_details": {},
   "ai_assessments": [],
-  "policy_decision": null,
+  "policy_decision": {
+    "decision": "ALLOW",
+    "reasons": [
+      {
+        "rule": "CONFIGURED_CHECKS_PASSED",
+        "explanation": "Configured checks passed. This is not proof that the package is harmless.",
+        "finding_ids": [],
+        "evidence_ids": [
+          "E-P-4ce7e4938c46f10d"
+        ]
+      }
+    ],
+    "config": {
+      "require_complete": true,
+      "review_medium": true,
+      "block_high": false,
+      "require_verified_provenance": false
+    },
+    "limitation": "Evaluates supplied report facts under configured checks, not authenticity, safety, signatures or runtime behavior."
+  },
   "limitations": [
     "Local user-selected source is not authenticated and is not tied to a repository commit.",
     "Static inspection only: no target code was executed. Matching files do not prove safety.",
@@ -261,7 +289,7 @@
     "Static Python rules are syntactic: aliases, local modules, shadowing, indirect calls, runtime code and reachability are not resolved.",
     "Python, PTH and metadata parsing is limited to 128 KiB per file and 20,000 AST nodes. Unparsed files make analysis PARTIAL.",
     "Source metadata outside the selected prefix is not used; missing or dynamic declarations leave metadata comparisons UNKNOWN.",
-    "Provenance, AI, historical analysis and release policies are not checked.",
+    "Provenance is not authenticated. AI and historical comparisons run only when requested; consult their explicit statuses. Release Gate evaluates configured deterministic checks.",
     "Packaging metadata is identified by path only; generated content is not verified.",
     "Source-prefix selection defines scope. Files outside that prefix are counted but excluded.",
     "Text excerpts and diffs are bounded previews; SHA-256 hashes cover full inspected contents.",

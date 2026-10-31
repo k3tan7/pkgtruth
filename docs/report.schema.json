@@ -396,6 +396,79 @@
       "title": "MetadataChange",
       "type": "object"
     },
+    "PolicyDecision": {
+      "additionalProperties": false,
+      "properties": {
+        "decision": {
+          "enum": [
+            "ALLOW",
+            "REVIEW",
+            "BLOCK"
+          ],
+          "title": "Decision",
+          "type": "string"
+        },
+        "reasons": {
+          "items": {
+            "$ref": "#/$defs/PolicyReason"
+          },
+          "title": "Reasons",
+          "type": "array"
+        },
+        "config": {
+          "additionalProperties": true,
+          "title": "Config",
+          "type": "object"
+        },
+        "limitation": {
+          "title": "Limitation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "decision",
+        "reasons",
+        "config",
+        "limitation"
+      ],
+      "title": "PolicyDecision",
+      "type": "object"
+    },
+    "PolicyReason": {
+      "additionalProperties": false,
+      "properties": {
+        "rule": {
+          "title": "Rule",
+          "type": "string"
+        },
+        "explanation": {
+          "title": "Explanation",
+          "type": "string"
+        },
+        "finding_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Finding Ids",
+          "type": "array"
+        },
+        "evidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "rule",
+        "explanation",
+        "finding_ids",
+        "evidence_ids"
+      ],
+      "title": "PolicyReason",
+      "type": "object"
+    },
     "RecordCheck": {
       "additionalProperties": false,
       "properties": {
@@ -610,8 +683,14 @@
       "type": "array"
     },
     "provenance_status": {
-      "const": "NOT_CHECKED",
       "default": "NOT_CHECKED",
+      "enum": [
+        "NOT_CHECKED",
+        "VERIFIED",
+        "INVALID",
+        "UNAVAILABLE",
+        "UNRESOLVED"
+      ],
       "title": "Provenance Status",
       "type": "string"
     },
@@ -636,6 +715,19 @@
       "additionalProperties": true,
       "title": "Release Fingerprint",
       "type": "object"
+    },
+    "impact_truncated": {
+      "default": false,
+      "title": "Impact Truncated",
+      "type": "boolean"
+    },
+    "impact_relationships": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Impact Relationships",
+      "type": "array"
     },
     "dna_baseline": {
       "additionalProperties": true,
@@ -675,9 +767,15 @@
       "type": "array"
     },
     "policy_decision": {
-      "default": null,
-      "title": "Policy Decision",
-      "type": "null"
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PolicyDecision"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     },
     "limitations": {
       "items": {

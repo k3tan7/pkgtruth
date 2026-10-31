@@ -9,8 +9,8 @@
   "artifact_sha256": "055a1a14e0680d44d58599a2242c438027c474b55ec065df2b8784624b4faa08",
   "source_tree_sha256": "6e23e2147fdd9ad2c363af9c8f650dc3c42cf253c2fb4756f9f6d12a33fe3b45",
   "source_commit": null,
-  "package_name": null,
-  "package_version": null,
+  "package_name": "demo",
+  "package_version": "1.0",
   "retrieval": {},
   "mappings": [
     {
@@ -368,6 +368,13 @@
       "description": "PTH_EXECUTION at line 1: import demo; demo.VALUE = 2 (NEW relative to mapped source)",
       "source_excerpt": null,
       "artifact_excerpt": "import demo; demo.VALUE = 2"
+    },
+    {
+      "id": "E-P-4fb73f9cf8803d88",
+      "path": "<policy input statuses>",
+      "description": "Deterministic policy input statuses; not authenticated report signing.",
+      "source_excerpt": null,
+      "artifact_excerpt": "{\"analysis_status\": \"COMPLETE\", \"configured_checks\": {\"block_high\": false, \"require_complete\": true, \"require_verified_provenance\": false, \"review_medium\": true}, \"provenance_status\": \"NOT_CHECKED\", \"record_status\": \"VALID\"}"
     }
   ],
   "release_fingerprint": {
@@ -433,12 +440,86 @@
     ],
     "coverage_limited": false
   },
+  "impact_truncated": false,
+  "impact_relationships": [
+    {
+      "origin": "demo/message.py",
+      "target": "NETWORK_CAPABILITY: import: socket",
+      "relationship": "contains static indicator; execution not established",
+      "evidence_ids": [
+        "E-S-49b99f97739f9294"
+      ]
+    },
+    {
+      "origin": "Python site initialization (conditional)",
+      "target": "startup.pth",
+      "relationship": "may process/import if installed and enabled",
+      "evidence_ids": [
+        "E-S-3c075a4785b6aefd"
+      ]
+    },
+    {
+      "origin": "startup.pth",
+      "target": "demo/__init__.py",
+      "relationship": "directive names this module; reachability unverified",
+      "evidence_ids": [
+        "E-S-3c075a4785b6aefd"
+      ]
+    },
+    {
+      "origin": "Entry point demo",
+      "target": "demo/message.py",
+      "relationship": "declares target; invocation not established",
+      "evidence_ids": [
+        "E-9d839cc01c056d2d"
+      ]
+    }
+  ],
   "dna_baseline": {},
   "historical_anomalies": [],
   "model_status": "NOT_CONFIGURED",
   "model_details": {},
   "ai_assessments": [],
-  "policy_decision": null,
+  "policy_decision": {
+    "decision": "REVIEW",
+    "reasons": [
+      {
+        "rule": "HIGH_FINDINGS",
+        "explanation": "High-priority static findings require review; they do not prove an attack.",
+        "finding_ids": [
+          "F-S-3c075a4785b6aefd"
+        ],
+        "evidence_ids": [
+          "E-S-3c075a4785b6aefd"
+        ]
+      },
+      {
+        "rule": "MEDIUM_FINDINGS",
+        "explanation": "Configured checks require review of unexplained differences or capabilities.",
+        "finding_ids": [
+          "F-990c854162472d40",
+          "F-f7bb344e28a9cacf",
+          "F-94b3806424ff871b",
+          "F-S-49b99f97739f9294",
+          "F-M-797ff787bbe3f9a4"
+        ],
+        "evidence_ids": [
+          "E-990c854162472d40",
+          "E-f7bb344e28a9cacf",
+          "E-94b3806424ff871b",
+          "E-S-49b99f97739f9294",
+          "E-9d839cc01c056d2d"
+        ]
+      }
+    ],
+    "config": {
+      "require_complete": true,
+      "review_medium": true,
+      "block_high": false,
+      "require_verified_provenance": false
+    },
+    "limitation": "Evaluates supplied report facts under configured checks, not authenticity, safety, signatures or runtime behavior."
+  },
   "limitations": [
     "Local user-selected source is not authenticated and is not tied to a repository commit.",
     "Static inspection only: no target code was executed. Matching files do not prove safety.",
@@ -446,7 +527,7 @@
     "Static Python rules are syntactic: aliases, local modules, shadowing, indirect calls, runtime code and reachability are not resolved.",
     "Python, PTH and metadata parsing is limited to 128 KiB per file and 20,000 AST nodes. Unparsed files make analysis PARTIAL.",
     "Source metadata outside the selected prefix is not used; missing or dynamic declarations leave metadata comparisons UNKNOWN.",
-    "Provenance, AI, historical analysis and release policies are not checked.",
+    "Provenance is not authenticated. AI and historical comparisons run only when requested; consult their explicit statuses. Release Gate evaluates configured deterministic checks.",
     "Packaging metadata is identified by path only; generated content is not verified.",
     "Source-prefix selection defines scope. Files outside that prefix are counted but excluded.",
     "Text excerpts and diffs are bounded previews; SHA-256 hashes cover full inspected contents.",

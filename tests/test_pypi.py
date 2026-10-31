@@ -142,3 +142,13 @@ def test_exact_tag_archive_comment_fallback(registry, monkeypatch):
     assert report.source_commit == 'a' * 40
     assert report.retrieval['source_resolution_method'] == 'GIT_ARCHIVE_COMMENT_UNVERIFIED'
     assert report.provenance_status == 'NOT_CHECKED'
+
+
+def test_wheel_declared_identity_mismatch_is_not_accepted(registry):
+    fetcher,responses,metadata=registry
+    wheel=make_wheel({'demo.py':b'pass\n','demo-1.0.dist-info/METADATA':b'Name: other\nVersion: 1.0\n'})
+    responses['/demo.whl']=wheel
+    metadata['urls'][0]['size']=len(wheel)
+    metadata['urls'][0]['digests']['sha256']=hashlib.sha256(wheel).hexdigest()
+    with pytest.raises(InputError,match='identity'):
+        scan_pypi('demo','1.0',fetcher=fetcher)

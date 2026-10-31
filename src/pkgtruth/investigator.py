@@ -37,8 +37,10 @@ def endpoint():
 
 
 def request(client, method, path, payload=None):
-    with client.stream(method, path, json=payload) as response:
+    with client.stream(method, path, json=payload, timeout=120 if path == '/api/generate' else 5) as response:
         response.raise_for_status()
+        if response.headers.get('content-encoding','identity') != 'identity':
+            raise InputError('Encoded local model responses are unsupported')
         body = bytearray()
         for chunk in response.iter_bytes(4096):
             if len(body) + len(chunk) > 65536:
@@ -58,7 +60,7 @@ def investigate(report, *, client=None):
     try:
         # Even injected test clients cannot change the product's configured destination policy.
         url = endpoint()
-        client = client or httpx.Client(base_url=url, timeout=httpx.Timeout(120, connect=3), trust_env=False, follow_redirects=False)
+        client = client or httpx.Client(base_url=url, timeout=httpx.Timeout(120, connect=3), trust_env=False, follow_redirects=False, headers={'Accept-Encoding':'identity'})
         tags = request(client, 'GET', '/api/tags')
         model = next((m for m in tags.get('models', []) if isinstance(m, dict) and m.get('name') == MODEL), None)
         if not model or model.get('digest') != EXPECTED_DIGEST:
@@ -71,7 +73,7 @@ def investigate(report, *, client=None):
             runtime = 'UNAVAILABLE'
         result.model_details = {'model': MODEL, 'digest': model['digest'], 'runtime_version': runtime,
             'license': 'Apache-2.0 (reported by local service)' if 'Apache License' in license_text and 'Version 2.0' in license_text else 'UNRESOLVED',
-            'license_sha256': hashlib.sha256(license_text.encode()).hexdigest(), 'requested_options': OPTIONS,
+            'license_sha256': hashlib.sha256(license_text.encode()).hexdigest(), 'requested_options': dict(OPTIONS),
             'think': False, 'context_selection': 'highest-priority findings; at most six evidence excerpts; text is untrusted'}
         ordered = sorted(report.findings, key=lambda f: {'HIGH': 0, 'MEDIUM': 1, 'INFORMATIONAL': 2}[f.severity])[:4]
         ids = list(dict.fromkeys(e for finding in ordered for e in finding.evidence_ids))[:6]
