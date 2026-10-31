@@ -16,9 +16,9 @@ Acceptance met: installed CLI and web generate equivalent reports for clean/tamp
 
 ## Milestone 2 — security analysis
 
-Branch: `codex/security-analysis`, based on safely fast-forwarded main after PR #2. PR: pending publication.
+Branch: `codex/security-analysis`, based on safely fast-forwarded main after PR #2. PR: [#3](https://github.com/k3tan7/pkgtruth/pull/3).
 
-Implemented and locally verified: 112 passing tests on Python 3.12.15 (installed wheel) and 3.14.6, plus four real localhost upload/export comparisons. Remote CI and PR review are pending.
+Implemented and locally verified: 112 passing tests on Python 3.12.15 (installed wheel) and 3.14.6, plus four real localhost upload/export comparisons. GitHub Actions passed for implementation commit `b3684fe` ([run](https://github.com/k3tan7/pkgtruth/actions/runs/41235241675)). Human PR review and merge are pending; current-head checks must pass before merging.
 - RECORD hash/size/CSV coverage validation, explicit VALID/INVALID/UNAVAILABLE/UNRESOLVED states.
 - Executable .pth and customization startup surfaces, bounded AST import/call indicators, native/bytecode inventory.
 - Source-relative NEW/PRESENT/SOURCE_ONLY/UNKNOWN indicators with stable line-context evidence.
