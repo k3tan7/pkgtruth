@@ -1,1 +1,79 @@
-{% extends 'base.html' %}{% block content %}<div class="eyebrow">LOCAL WORKER / ACTUAL STATUS</div><h1>Investigation job.</h1><section class="panel" id="job-status" data-job-id="{{ job.id }}"><p>Job <code>{{ job.id }}</code> · {{ job.kind }}</p><h2 id="job-state">{{ job.status }}</h2><p id="job-error">{{ job.error or '' }}</p><p>Job COMPLETE means the operation finished, not a safe package or successful AI validation. No percentage is estimated. QUEUED/RUNNING states are persisted; interrupted jobs must be resubmitted after restart.</p>{% if job.scan_id %}<a class="button" href="/scans/{{ job.scan_id }}">Open results →</a>{% endif %}</section>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}Analysis in Progress · pkgtruth{% endblock %}
+
+{% block content %}
+{% set job_labels = job_labels | default({
+    'QUEUED': 'Waiting in worker queue',
+    'RUNNING': 'Analyzing package files',
+    'COMPLETE': 'Analysis complete',
+    'FAILED': 'Analysis failed',
+    'INTERRUPTED': 'Analysis interrupted'
+}) %}
+{% set phase_labels = phase_labels | default({
+    'download': 'Downloading package from registry',
+    'unpack': 'Unpacking distribution archive safely',
+    'source': 'Discovering and fetching matching source',
+    'analysis': 'Comparing file digests and inspecting AST indicators',
+    'policy': 'Evaluating configured security rules'
+}) %}
+
+<a class="breadcrumb" href="/investigations">Investigations / In progress</a>
+
+<div class="eyebrow">FOLLOWING THE EVIDENCE</div>
+<h1>
+  {% if job.kind == 'ai' %}
+    Explaining findings with local AI
+  {% elif job.kind == 'dna' %}
+    Comparing release DNA
+  {% else %}
+    Analyzing package release
+  {% endif %}
+</h1>
+<p class="subtitle">This page tracks the worker status in real time. You can safely return to the dashboard while analysis runs.</p>
+
+<section class="panel narrow" id="job-status" data-job-id="{{ job.id }}">
+  <div class="panel-header">
+    <h2 id="job-state" role="status" aria-live="polite">
+      {{ job_labels.get(job.status, job.status) }}
+    </h2>
+    <span class="badge {{ 'danger' if job.status in ['FAILED', 'INTERRUPTED'] else 'warn' if job.status in ['QUEUED', 'RUNNING'] else '' }}">
+      {{ job.status }}
+    </span>
+  </div>
+
+  <div class="job-indicator {{ 'done' if job.status not in ['QUEUED','RUNNING'] else '' }}" aria-hidden="true"></div>
+
+  <p id="job-phase" class="muted">
+    {{ phase_labels.get(job.phase, job.phase or 'Preparing worker tasks…') }}
+  </p>
+
+  <p id="job-error" class="error" role="alert" {% if not job.error %}hidden{% endif %}>
+    {{ job.error or '' }}
+  </p>
+
+  <div class="note">
+    <strong>Verification guarantee:</strong> Packages are never imported or executed. Finishing analysis does not guarantee the package is safe; the resulting report will detail all verified facts and any coverage limitations.
+  </div>
+
+  <div class="actions spaced">
+    {% if job.scan_id %}
+    <a class="button" href="/scans/{{ job.scan_id }}">Open results →</a>
+    {% endif %}
+    <a class="button secondary" href="/packages">Start or retry a scan</a>
+    <a class="button secondary" href="/investigations">View investigations</a>
+  </div>
+
+  <details>
+    <summary>Technical job details</summary>
+    <dl>
+      <dt>Job ID</dt>
+      <dd><code>{{ job.id }}</code></dd>
+      <dt>Task Kind</dt>
+      <dd>{{ job.kind }}</dd>
+      <dt>Worker Status</dt>
+      <dd>{{ job.status }}</dd>
+    </dl>
+  </details>
+</section>
+
+{% endblock %}

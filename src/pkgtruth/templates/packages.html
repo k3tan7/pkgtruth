@@ -1,9 +1,120 @@
-{% extends 'base.html' %}{% block title %}PyPI investigation · pkgtruth{% endblock %}{% block content %}
-<div class="eyebrow">EXACT RELEASE / PUBLIC REGISTRY</div><h1>Investigate PyPI.</h1>
-<p class="subtitle">Choose a real package and exact version. Wheels are inspected without installation.</p>
-{% if error %}<div class="error" role="alert">{{ error }}</div>{% endif %}
-<form method="get" action="/packages" class="panel"><label for="package-name">Exact package name</label><input id="package-name" name="name" type="text" maxlength="100" required value="{{ project.name if project else '' }}" placeholder="idna"><button class="button" type="submit">Find versions</button></form>
-{% if project %}<section class="panel"><h2>{{ project.name }}</h2><p>{{ project.summary }}</p>
-<form method="post" action="/jobs/pypi" id="scan-form"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="name" value="{{ project.name }}"><label for="release-version">Exact version</label><select id="release-version" name="version" required>{% for version in project.versions %}<option value="{{ version }}" {% if version == project.latest %}selected{% endif %}>{{ version }}</option>{% endfor %}</select><button class="button" type="submit" id="submit-scan">Investigate release ↗</button><div id="scan-progress" role="status" hidden>Retrieving and inspecting the exact release…</div></form></section>{% endif %}
-<div class="note">Only approved public HTTPS hosts are contacted. Artifact digest and size must match PyPI. Exact GitHub release tags are treated as unverified source claims. Unresolved source yields an explicit PARTIAL artifact-only report; source distributions are never built.</div>
+{% extends 'base.html' %}
+{% block title %}Scan Package from PyPI · pkgtruth{% endblock %}
+
+{% block content %}
+<a class="breadcrumb" href="/">Dashboard / Scan Package</a>
+
+<div class="eyebrow">START WITH AN EXACT RELEASE</div>
+<h1>Scan a package</h1>
+<p class="subtitle">Find a Python package on PyPI, choose an exact release version, and inspect what ships inside it.</p>
+
+<nav class="tabs" aria-label="Scan method">
+  <a href="/packages" aria-current="page">From PyPI</a>
+  <a href="/scans/new">Upload local files</a>
+</nav>
+
+<div class="grid">
+  <section class="panel">
+    <div class="panel-header">
+      <h2>1. Find your package</h2>
+      <span class="badge neutral">PyPI Registry</span>
+    </div>
+
+    <form action="/packages" method="get">
+      <label for="package-name">Package name</label>
+      <div class="search-form compact">
+        <input
+          id="package-name"
+          name="name"
+          placeholder="e.g. idna, requests, urllib3, flask"
+          value="{{ project.name if project else request.query_params.get('name', '') }}"
+          required
+          maxlength="100"
+          autocomplete="off"
+        >
+        <button class="button" type="submit">Find versions</button>
+      </div>
+    </form>
+    <p class="help">PyPI is the official public index of Python packages. Enter an exact package name to inspect available releases.</p>
+
+    {% if error %}
+    <div class="error" role="alert">
+      <strong>We couldn't find that release</strong>
+      <p>{{ error }}</p>
+      <p class="small">Check the spelling and try again. Packages without a supported wheel archive cannot be inspected here.</p>
+    </div>
+    {% endif %}
+
+    {% if project %}
+    <div class="panel-divider">
+      <h2>2. Choose a version</h2>
+      <div class="info-item">
+        <strong>{{ project.name }}</strong>
+        {% if project.summary %}<p class="muted small">{{ project.summary }}</p>{% endif %}
+      </div>
+
+      <form method="post" action="/jobs/pypi" id="scan-form" class="actions spaced">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <input type="hidden" name="name" value="{{ project.name }}">
+
+        <div class="form-row">
+          <label for="release-version">Select release version</label>
+          <select id="release-version" name="version" required>
+            {% for version in project.versions %}
+            <option value="{{ version }}" {% if version == project.latest %}selected{% endif %}>
+              {{ version }}{% if version == project.latest %} (latest release){% endif %}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <button class="button" type="submit" id="submit-scan">Analyze Package →</button>
+        <div id="scan-progress" class="note" role="status" hidden>
+          Submitting your package investigation to the worker queue…
+        </div>
+      </form>
+    </div>
+    {% endif %}
+  </section>
+
+  <section class="panel flat">
+    <div class="panel-header">
+      <h2>What happens during analysis?</h2>
+      <span class="badge">Static Inspection</span>
+    </div>
+    <ol class="step-list">
+      <li>
+        <div>
+          <strong>Verify cryptographic digest</strong>
+          <small class="muted">Check the downloaded wheel against PyPI's recorded SHA-256 hash.</small>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Discover claimed source repository</strong>
+          <small class="muted">Extract repository URLs from metadata and match the release tag.</small>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Compare code &amp; static indicators</strong>
+          <small class="muted">Detect unexpected additions, startup directives (.pth), and execution capabilities.</small>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Generate plain-English findings</strong>
+          <small class="muted">Explain observed patterns with complete cryptographic evidence.</small>
+        </div>
+      </li>
+    </ol>
+    <div class="note">
+      <strong>Zero execution guarantee:</strong> No package code or dependencies are ever imported, installed, or executed.
+    </div>
+    <div class="actions">
+      <a href="/help#source">How source discovery works →</a>
+    </div>
+  </section>
+</div>
+
 {% endblock %}

@@ -1,115 +1,548 @@
-{% extends 'base.html' %}{% block title %}Investigation · {{ report.input_artifact }} · pkgtruth{% endblock %}{% block content %}
-<a href="/" class="breadcrumb">← Investigations</a>
+{% extends 'base.html' %}
+{% block title %}Investigation · {{ report.package_name or report.input_artifact }} {{ report.package_version or '' }} · pkgtruth{% endblock %}
+
+{% block content %}
+<a href="/investigations" class="breadcrumb">← Investigations</a>
+
 <div class="eyebrow">INVESTIGATION / {{ report.scan_id[:12] }}</div>
+
 <div class="page-heading">
-<div>
-<h1 class="artifact-title">{{ report.input_artifact }}</h1>
-<p class="subtitle">Explicit source mapping · <code>{{ report.mappings[0].source_prefix or '(root)' }}</code>
-</p>
+  <div>
+    <h1 class="artifact-title">{{ report.package_name or report.input_artifact }} {% if report.package_version %}<span class="muted">{{ report.package_version }}</span>{% endif %}</h1>
+    <p class="subtitle">
+      Inspecting <code>{{ report.input_artifact }}</code> · Source mapping: <code>{{ report.mappings[0].source_prefix or '(root)' }}</code>
+    </p>
+  </div>
+  <div class="actions">
+    <a class="button secondary" href="/scans/{{ report.scan_id }}/report.json">↓ Export JSON</a>
+    <a class="button secondary" href="/scans/{{ report.scan_id }}/report.html">↓ Proof Capsule HTML</a>
+  </div>
 </div>
-<a class="button secondary" href="/scans/{{ report.scan_id }}/report.json">↓ Export JSON</a><a class="button secondary" href="/scans/{{ report.scan_id }}/report.html">↓ Proof Capsule HTML</a>
-</div>
-{% set high_count = report.findings|selectattr('severity', 'equalto', 'HIGH')|list|length %}
-{% set medium_count = report.findings|selectattr('severity', 'equalto', 'MEDIUM')|list|length %}
-{% if report.retrieval %}<section class="panel"><h2>{{ report.package_name }} / {{ report.package_version }}</h2><p>Registry digest verified: {{ report.retrieval.registry_digest_verified }}. Source correspondence: {{ report.retrieval.source_correspondence }}.</p><p>Claimed source: <code>{{ report.retrieval.claimed_repository or 'UNRESOLVED' }}</code></p><p>Resolved revision: <code>{{ report.source_commit or 'UNRESOLVED' }}</code>. Matching tags are unverified claims, not authenticated provenance.</p></section>{% endif %}
-{% if report.source_resolution == 'ARTIFACT_ONLY' %}<div class="error">Source correspondence is unresolved. Files are unmatched artifact content; differences and new behavior relative to source cannot be established.</div>{% endif %}
-<section class="verdict">
-<span class="badge {{ 'warn' if report.analysis_status == 'PARTIAL' or high_count else '' }}">Coverage: {{ report.analysis_status }}</span>
-<h2>{{ 'Coverage needs review' if report.analysis_status == 'PARTIAL' else 'Inspect these findings' if high_count or medium_count else 'Inspection finished' }}</h2>
-<p>{{ high_count }} HIGH / {{ medium_count }} MEDIUM · {{ report.findings|length }} findings recorded. Static indicators and content changes do not establish malicious activity.</p>
-<small>Provenance: NOT_CHECKED &nbsp; / &nbsp; RECORD: {{ report.record_status }} &nbsp; / &nbsp; AI: {{ report.model_status }}</small>
-</section>
+
+{% set high_count = view.counts.high if view and view.counts else (report.findings|selectattr('severity', 'equalto', 'HIGH')|list|length) %}
+{% set medium_count = view.counts.medium if view and view.counts else (report.findings|selectattr('severity', 'equalto', 'MEDIUM')|list|length) %}
+
+{% if report.retrieval %}
 <section class="panel">
-<h2>Wheel RECORD consistency <span class="badge {{ 'warn' if report.record_status != 'VALID' else '' }}">{{ report.record_status }}</span></h2>
-<p>{{ report.record_check.checked_files }} file digests checked. A valid RECORD establishes internal consistency, not publisher authenticity or safety.</p>
-{% if report.record_check.issues %}<details><summary>{{ report.record_check.issues|length }} consistency issues</summary><ul>{% for issue in report.record_check.issues %}<li><code>{{ issue.path or '(wheel inventory)' }}</code>: {{ issue.reason }}</li>{% endfor %}</ul></details>{% endif %}
+  <div class="panel-header">
+    <h2>Source Discovery &amp; Registry Metadata</h2>
+    <span class="badge neutral">{{ report.source_resolution }}</span>
+  </div>
+  <dl>
+    <dt>Package &amp; Version</dt>
+    <dd><strong>{{ report.package_name }}</strong> / {{ report.package_version }}</dd>
+    <dt>Registry Digest Verified</dt>
+    <dd>{{ 'Yes (cryptographically matches PyPI digest)' if report.retrieval.registry_digest_verified else 'No / Unverified' }}</dd>
+    <dt>Claimed Source</dt>
+    <dd><code>{{ report.retrieval.claimed_repository or 'UNRESOLVED' }}</code></dd>
+    <dt>Resolved Revision</dt>
+    <dd><code>{{ report.source_commit or 'UNRESOLVED' }}</code></dd>
+    <dt>Source Correspondence</dt>
+    <dd>{{ report.retrieval.source_correspondence }}. Matching tags are unverified claims, not authenticated provenance.</dd>
+  </dl>
 </section>
-<section class="panel">
-<h2>Install impact preview</h2>
-<p class="muted">Potential activation surfaces and syntactic capabilities relative to the selected source. Execution and reachability are not established.</p>
-{% for indicator in report.behavior_indicators %}<details><summary><span class="badge {{ 'warn' if indicator.relation in ['NEW','UNKNOWN'] else '' }}">{{ indicator.relation }}</span> {{ indicator.kind }} · <code>{{ indicator.path }}:{{ indicator.line }}</code></summary>
-<p><code>{{ indicator.symbol }}</code></p><p>{{ indicator.explanation }}</p>
-{% for reference in indicator.evidence_ids %}{% set item = evidence_lookup[reference] %}<p><code>{{ reference }}</code> <button type="button" class="copy" data-copy="{{ reference }}">Copy evidence ID</button></p>{% if item.artifact_excerpt is not none %}<pre class="diff">{{ item.artifact_excerpt }}</pre>{% endif %}{% if item.source_excerpt is not none %}<p>Source context:</p><pre class="diff">{{ item.source_excerpt }}</pre>{% endif %}{% endfor %}</details>
-{% else %}<p>No supported indicators identified. This does not prove absence of other behavior.</p>{% endfor %}
+{% endif %}
+
+{% if report.source_resolution == 'ARTIFACT_ONLY' %}
+<div class="note error" role="alert">
+  <strong>Source comparison unavailable (ARTIFACT_ONLY)</strong>
+  <p>Source correspondence is unresolved. Files are unmatched artifact content; differences and new behavior relative to source cannot be established.</p>
+</div>
+{% endif %}
+
+<!-- =========================================================================
+     LAYER 1 — FIVE-SECOND EXECUTIVE SUMMARY AT THE TOP
+     ========================================================================= -->
+<section class="verdict-container {{ view.executive_summary.tone if view else 'warn' }}">
+  <div class="verdict-header">
+    <div class="verdict-header-left">
+      <span class="badge {{ 'warn' if report.analysis_status == 'PARTIAL' or high_count else '' }}">
+        Coverage: {{ report.analysis_status }}
+      </span>
+      <h2>
+        {% if report.analysis_status == 'PARTIAL' %}
+          Coverage needs review
+        {% elif view and view.executive_summary %}
+          {{ view.executive_summary.headline }}
+        {% elif high_count or medium_count %}
+          Inspect these findings
+        {% else %}
+          Inspection finished
+        {% endif %}
+      </h2>
+    </div>
+    <div>
+      <span class="verdict-badge-large {{ view.executive_summary.tone if view else 'neutral' }}">
+        {% if report.analysis_status == 'PARTIAL' %}
+          Coverage needs review
+        {% elif view and view.executive_summary %}
+          {{ view.decision_code if view.decision_code != 'NOT_EVALUATED' else view.executive_summary.headline }}
+        {% else %}
+          {{ report.analysis_status }}
+        {% endif %}
+      </span>
+    </div>
+  </div>
+
+  <p class="verdict-explanation">
+    {% if view and view.executive_summary %}
+      {{ view.executive_summary.explanation }}
+    {% else %}
+      {{ high_count }} HIGH / {{ medium_count }} MEDIUM · {{ report.findings|length }} findings recorded. Static indicators and content changes do not establish malicious activity.
+    {% endif %}
+  </p>
+
+  <div class="fact-strip">
+    <div class="fact-card">
+      <div>
+        <span class="fact-label">Findings</span>
+        <span class="fact-value">{{ high_count + medium_count }} requiring review</span>
+      </div>
+      <span class="fact-detail">{{ high_count }} HIGH / {{ medium_count }} MEDIUM · {{ report.findings|length }} findings recorded</span>
+    </div>
+    <div class="fact-card">
+      <div>
+        <span class="fact-label">Inspection Coverage</span>
+        <span class="fact-value">{{ 'Coverage needs review' if report.analysis_status == 'PARTIAL' else report.analysis_status }}</span>
+      </div>
+      <span class="fact-detail">{{ report.coverage.compared_files }} paths compared, {{ report.coverage.artifact_files }} artifact files</span>
+    </div>
+    <div class="fact-card">
+      <div>
+        <span class="fact-label">Wheel Integrity</span>
+        <span class="fact-value">RECORD: {{ report.record_status }}</span>
+      </div>
+      <span class="fact-detail">{{ report.record_check.checked_files }} digests verified internally</span>
+    </div>
+    <div class="fact-card">
+      <div>
+        <span class="fact-label">Release Gate</span>
+        <span class="fact-value">{{ report.policy_decision.decision if report.policy_decision else 'NOT_EVALUATED' }}</span>
+      </div>
+      <span class="fact-detail">{{ view.decision_label if view else 'Rules have not been evaluated' }}</span>
+    </div>
+  </div>
+
+  <div class="next-steps-container">
+    <span class="next-steps-title">Recommended next steps</span>
+    <ol class="next-steps-list">
+      {% if view and view.next_steps %}
+        {% for step in view.next_steps %}
+        <li>{{ step }}</li>
+        {% endfor %}
+      {% else %}
+        <li>Review high-priority findings and the files they reference.</li>
+        <li>Compare an earlier release and verify unexplained changes with the publisher.</li>
+      {% endif %}
+    </ol>
+  </div>
+
+  <div class="verdict-meta-footer">
+    <span>Provenance: {{ report.provenance_status or 'NOT_CHECKED' }} &nbsp; / &nbsp; RECORD: {{ report.record_status }} &nbsp; / &nbsp; AI: {{ report.model_status }}</span>
+    <span>Scan ID: <code>{{ report.scan_id[:12] }}</code></span>
+  </div>
 </section>
-<section class="panel">
-<h2>Entry points &amp; dependencies</h2>
-<p class="muted">Static declarations only; values are not resolved, installed or invoked. UNKNOWN means no unambiguous in-scope source baseline.</p>
-{% for change in report.metadata_changes %}<details><summary><span class="badge {{ 'warn' if change.relation != 'PRESENT' else '' }}">{{ change.relation }}</span> {{ change.field }} · <code>{{ change.path }}</code></summary>
-<p>Source: <code>{{ change.source_path or '(baseline unavailable)' }}</code></p><pre class="diff">{{ change.source_values|join('\n') if change.source_values is not none else 'UNKNOWN' }}</pre>
-<p>Artifact:</p><pre class="diff">{{ change.artifact_values|join('\n') or '(none declared)' }}</pre><p>Evidence: {{ change.evidence_ids|join(', ') }}</p></details>
-{% else %}<p>No supported distribution metadata declarations found.</p>{% endfor %}
+
+<!-- =========================================================================
+     LAYER 2 — UNDERSTANDABLE FINDINGS ("WHAT WE FOUND")
+     ========================================================================= -->
+<section class="findings-container">
+  <div class="section-heading">
+    <div>
+      <h2>What we found</h2>
+      <p class="muted">Clear, plain-language explanations of observed code patterns and potential implications.</p>
+    </div>
+    <span class="badge {{ 'warn' if high_count or medium_count else 'neutral' }}">
+      {{ report.findings|length }} findings recorded
+    </span>
+  </div>
+
+  {% if view and view.translated_findings %}
+  <div class="findings-grid">
+    {% for item in view.translated_findings %}
+    <article class="finding-card severity-{{ item.severity|lower }}">
+      <div class="finding-card-header">
+        <div class="finding-card-title-group">
+          <span class="badge {{ 'danger' if item.severity == 'HIGH' else 'warn' if item.severity == 'MEDIUM' else 'neutral' }}">
+            {{ item.severity }}
+          </span>
+          <h3 class="finding-card-title">{{ item.title }}</h3>
+          <code>{{ item.rule }}</code>
+        </div>
+        <small class="muted">ID: <code>{{ item.id }}</code></small>
+      </div>
+
+      <div class="finding-pillars">
+        <div class="finding-pillar">
+          <span class="pillar-label">1. What happened?</span>
+          <p class="pillar-content">{{ item.what_happened }}</p>
+        </div>
+        <div class="finding-pillar">
+          <span class="pillar-label">2. Why does it matter?</span>
+          <p class="pillar-content">{{ item.why_it_matters }}</p>
+        </div>
+        <div class="finding-pillar">
+          <span class="pillar-label">3. What should I check?</span>
+          <p class="pillar-content">{{ item.what_to_check }}</p>
+        </div>
+      </div>
+
+      <div class="finding-technical-details">
+        <details>
+          <summary>Technical Details &amp; Supporting Evidence ({{ item.evidence_ids|length }} item{% if item.evidence_ids|length != 1 %}s{% endif %})</summary>
+          <p><strong>Rule:</strong> <code>{{ item.rule }}</code> · <strong>Details:</strong> {{ item.original_explanation }}</p>
+          {% for ref_id in item.evidence_ids %}
+            {% set ev = evidence_lookup[ref_id] if evidence_lookup and ref_id in evidence_lookup else None %}
+            {% if ev %}
+            <div class="evidence-excerpt-block">
+              <div>
+                <code>{{ ev.path }}</code> <small>(Evidence ID: {{ ref_id }})</small>
+                <button type="button" class="copy" data-copy="{{ ref_id }}">Copy evidence ID</button>
+              </div>
+              <p class="muted small">{{ ev.description }}</p>
+              {% if ev.artifact_excerpt %}
+              <p class="small">Artifact excerpt:</p>
+              <pre class="diff">{{ ev.artifact_excerpt }}</pre>
+              {% endif %}
+              {% if ev.source_excerpt %}
+              <p class="small">Source excerpt:</p>
+              <pre class="diff">{{ ev.source_excerpt }}</pre>
+              {% endif %}
+            </div>
+            {% else %}
+            <p><code>{{ ref_id }}</code> <button type="button" class="copy" data-copy="{{ ref_id }}">Copy evidence ID</button></p>
+            {% endif %}
+          {% endfor %}
+        </details>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="panel">
+    <p>No byte differences in the selected scope. This does not prove safety.</p>
+  </div>
+  {% endif %}
 </section>
-<section class="panel"><h2>Local AI investigator <span class="badge">{{ report.model_status }}</span></h2><p>Qwen explanations are unverified interpretations. Validation covers JSON and supplied evidence IDs, not factual correctness. Deterministic hashes, findings and policy results are preserved.</p>
-{% if report.model_details.error %}<div class="error">{{ report.model_details.error }}</div>{% endif %}
-{% for assessment in report.ai_assessments %}<h3>{{ assessment.explanation }}</h3><p><strong>Legitimate explanation:</strong> {{ assessment.legitimate_explanation }}</p><p><strong>Security concern:</strong> {{ assessment.security_concern }}</p><p><strong>Uncertainty:</strong> {{ assessment.uncertainty }}</p><ul>{% for check in assessment.next_checks %}<li>{{ check }}</li>{% endfor %}</ul><p>Evidence: {{ assessment.evidence_ids|join(', ') }}</p>{% endfor %}
-{% if report.model_details.digest %}<p>Model <code>{{ report.model_details.model }}</code> · digest <code>{{ report.model_details.digest }}</code> · {{ report.model_details.license }}</p>{% endif %}
-<form action="/jobs/ai" method="post"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="scan_id" value="{{ report.scan_id }}"><button class="button secondary" type="submit">Investigate with local Qwen</button></form></section>
-<section class="panel"><h2>Release DNA</h2><p>Deterministic historical comparison. First observed means relative to the selected inspected baseline; it is not trained ML or proof of execution.</p>
-{% if baselines %}<form method="post" action="/scans/{{ report.scan_id }}/dna"><input type="hidden" name="csrf" value="{{ csrf }}"><label for="baseline">Earlier release</label><select id="baseline" name="baseline">{% for item in baselines %}<option value="{{ item.scan_id }}">{{ item.package_name or item.input_artifact }} {{ item.package_version or item.scan_id[:8] }}</option>{% endfor %}</select><button class="button secondary" type="submit">Compare releases</button></form>{% endif %}
-{% if report.dna_baseline %}<p>Baseline <code>{{ report.dna_baseline.scan_id }}</code> → current <code>{{ report.scan_id }}</code> · coverage limited: {{ report.dna_baseline.coverage_limited }}</p>{% endif %}
-{% for item in report.historical_anomalies %}<details><summary><span class="badge {{ 'warn' if item.severity != 'INFORMATIONAL' else '' }}">{{ item.severity }}</span> {{ item.kind }} · <code>{{ item.path }}</code></summary><p>{{ item.explanation }}</p><pre class="diff">Previous: {{ item.previous }}
-Current: {{ item.current }}</pre><p>Evidence: {{ item.evidence_ids|join(', ') }}</p></details>{% else %}<p>No historical comparison recorded.</p>{% endfor %}</section>
-{% if report.policy_decision %}<section class="panel"><h2>Release Gate <span class="badge {{ 'warn' if report.policy_decision.decision != 'ALLOW' else '' }}">{{ report.policy_decision.decision }}</span></h2><p>{{ report.policy_decision.limitation }}</p>{% for reason in report.policy_decision.reasons %}<details><summary>{{ reason.rule }}</summary><p>{{ reason.explanation }}</p><p>Evidence: {{ reason.evidence_ids|join(', ') }}</p></details>{% endfor %}<a class="text-link" href="/policy">Configure future scan policies →</a></section>{% endif %}
-{% if report.impact_relationships %}<section class="panel"><h2>Static impact relationships</h2>{% if report.impact_truncated %}<p class="note">Relationship preview truncated at its edge limit. Full inspected findings remain in the report.</p>{% endif %}<p>Conditional declarations and syntactic containment only. These arrows do not establish runtime execution paths.</p>{% for edge in report.impact_relationships %}<div class="finding"><code>{{ edge.origin }}</code><span>— {{ edge.relationship }} →</span><code>{{ edge.target }}</code></div>{% endfor %}</section>{% endif %}
-<div class="metrics">{% for name in ['identical','modified','added','removed'] %}<div class="metric">
-<span>{{ name|upper }}</span>
-<strong class="{{ 'accent' if name == 'identical' else '' }}">{{ report.coverage|attr(name) }}</strong>
-<small>files</small>
-</div>{% endfor %}</div>
-<details class="panel evidence-meta">
-<summary>Artifact identity &amp; coverage</summary>
-<p>SHA-256 <code class="hash">{{ report.artifact_sha256 }}</code>
-</p>
-<p>{{ report.coverage.artifact_files }} artifact files · {{ report.coverage.source_files }} mapped source files · {{ report.coverage.excluded_source_files }} source files excluded</p>
-<p>Source tree SHA-256 <code class="hash">{{ report.source_tree_sha256 }}</code>
-</p>
-</details>
-<div class="section-heading">
-<h2>File explorer</h2>
-<span class="muted">{{ report.coverage.compared_files }} paths compared</span>
+
+<!-- =========================================================================
+     LAYER 3 — COMPLETE TECHNICAL EVIDENCE AT THE BOTTOM
+     ========================================================================= -->
+<div class="technical-evidence-container">
+  <div class="section-heading">
+    <div>
+      <h2>Complete Technical Evidence</h2>
+      <p class="muted">Progressively disclosed evidence, integrity digests, and deterministic analysis records.</p>
+    </div>
+    <span class="badge neutral">Rules v{{ report.rule_version }} · Engine v{{ report.tool_version }}</span>
+  </div>
+
+  <!-- 1. Wheel RECORD Verification -->
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Wheel RECORD consistency</h2>
+      <span class="badge {{ 'warn' if report.record_status != 'VALID' else '' }}">{{ report.record_status }}</span>
+    </div>
+    <p>{{ report.record_check.checked_files }} file digests checked. A valid RECORD establishes internal consistency, not publisher authenticity or safety.</p>
+    {% if report.record_check.issues %}
+    <details open>
+      <summary>{{ report.record_check.issues|length }} consistency issues detected</summary>
+      <ul class="feature-list">
+        {% for issue in report.record_check.issues %}
+        <li><code>{{ issue.path or '(wheel inventory)' }}</code>: {{ issue.reason }}</li>
+        {% endfor %}
+      </ul>
+    </details>
+    {% endif %}
+  </section>
+
+  <!-- 2. Install Impact Preview -->
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Install impact preview</h2>
+      <span class="badge neutral">{{ report.behavior_indicators|length }} indicator(s)</span>
+    </div>
+    <p class="muted">Potential activation surfaces and syntactic capabilities relative to the selected source. Execution and reachability are not established.</p>
+    {% for indicator in report.behavior_indicators %}
+    <details>
+      <summary>
+        <span class="summary-left">
+          <span class="badge {{ 'warn' if indicator.relation in ['NEW','UNKNOWN'] else '' }}">{{ indicator.relation }}</span>
+          <span>{{ indicator.kind }} · <code>{{ indicator.path }}:{{ indicator.line }}</code></span>
+        </span>
+      </summary>
+      <p>Symbol: <code>{{ indicator.symbol }}</code></p>
+      <p>{{ indicator.explanation }}</p>
+      {% for reference in indicator.evidence_ids %}
+        {% set item = evidence_lookup[reference] if evidence_lookup and reference in evidence_lookup else None %}
+        <p>
+          <code>{{ reference }}</code>
+          <button type="button" class="copy" data-copy="{{ reference }}">Copy evidence ID</button>
+        </p>
+        {% if item and item.artifact_excerpt is not none %}
+        <pre class="diff">{{ item.artifact_excerpt }}</pre>
+        {% endif %}
+        {% if item and item.source_excerpt is not none %}
+        <p class="small">Source context:</p>
+        <pre class="diff">{{ item.source_excerpt }}</pre>
+        {% endif %}
+      {% endfor %}
+    </details>
+    {% else %}
+    <p>No supported indicators identified. This does not prove absence of other behavior.</p>
+    {% endfor %}
+
+    {% if report.impact_relationships %}
+    <div class="impact-subsection">
+      <h3>Static impact relationships</h3>
+      {% if report.impact_truncated %}
+      <p class="note">Relationship preview truncated at its edge limit. Full inspected findings remain in the report.</p>
+      {% endif %}
+      <p class="muted small">Conditional declarations and syntactic containment only. These arrows do not establish runtime execution paths.</p>
+      {% for edge in report.impact_relationships %}
+      <div class="impact-edge">
+        <div class="impact-node"><code>{{ edge.origin }}</code></div>
+        <div class="arrow" aria-hidden="true">→</div>
+        <div class="impact-node"><code>{{ edge.target }}</code></div>
+      </div>
+      <p class="small muted">Relationship: {{ edge.relationship }}</p>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </section>
+
+  <!-- 3. Entry Points & Dependencies -->
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Entry points &amp; dependencies</h2>
+      <span class="badge neutral">{{ report.metadata_changes|length }} declaration(s)</span>
+    </div>
+    <p class="muted">Static declarations only; values are not resolved, installed or invoked. UNKNOWN means no unambiguous in-scope source baseline.</p>
+    {% for change in report.metadata_changes %}
+    <details>
+      <summary>
+        <span class="summary-left">
+          <span class="badge {{ 'warn' if change.relation != 'PRESENT' else '' }}">{{ change.relation }}</span>
+          <span>{{ change.field }} · <code>{{ change.path }}</code></span>
+        </span>
+      </summary>
+      <p>Source declaration (<code>{{ change.source_path or '(baseline unavailable)' }}</code>):</p>
+      <pre class="diff">{{ change.source_values|join('\n') if change.source_values is not none else 'UNKNOWN' }}</pre>
+      <p>Artifact declaration:</p>
+      <pre class="diff">{{ change.artifact_values|join('\n') or '(none declared)' }}</pre>
+      <p class="small muted">Evidence references: {{ change.evidence_ids|join(', ') }}</p>
+    </details>
+    {% else %}
+    <p>No supported distribution metadata declarations found.</p>
+    {% endfor %}
+  </section>
+
+  <!-- 4. Release DNA -->
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Release DNA</h2>
+      <span class="badge neutral">{{ report.historical_anomalies|length }} historical change(s)</span>
+    </div>
+    <p class="muted">Deterministic historical comparison against an earlier inspected release. First observed means relative to the selected baseline; it is not trained ML or proof of execution.</p>
+    {% if baselines %}
+    <form method="post" action="/scans/{{ report.scan_id }}/dna" class="form-row">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <label for="baseline">Select earlier release to compare</label>
+      <div class="inline-form-group">
+        <select id="baseline" name="baseline">
+          {% for item in baselines %}
+          <option value="{{ item.scan_id }}">{{ item.package_name or item.input_artifact }} {{ item.package_version or item.scan_id[:8] }}</option>
+          {% endfor %}
+        </select>
+        <button class="button secondary" type="submit">Compare releases →</button>
+      </div>
+    </form>
+    {% endif %}
+
+    {% if report.dna_baseline %}
+    <div class="note">
+      <p><strong>Baseline release:</strong> <code>{{ report.dna_baseline.scan_id }}</code> → <strong>Current release:</strong> <code>{{ report.scan_id }}</code></p>
+      <p class="small">{{ report.dna_baseline.direction_explanation or 'Comparison direction established between inspected releases.' }} · Coverage limited: {{ report.dna_baseline.coverage_limited }}</p>
+    </div>
+    {% endif %}
+
+    {% for item in report.historical_anomalies %}
+    <details open>
+      <summary>
+        <span class="summary-left">
+          <span class="badge {{ 'warn' if item.severity != 'INFORMATIONAL' else '' }}">{{ item.severity }}</span>
+          <span>{{ item.kind }} · <code>{{ item.path }}</code></span>
+        </span>
+      </summary>
+      <p>{{ item.explanation }}</p>
+      <pre class="diff">Baseline: {{ item.previous }}
+Current:  {{ item.current }}</pre>
+      <p class="small muted">Evidence: {{ item.evidence_ids|join(', ') }}</p>
+    </details>
+    {% else %}
+    <p>No historical anomalies recorded against a baseline release.</p>
+    {% endfor %}
+  </section>
+
+  <!-- 5. Local AI Investigator -->
+  <section class="panel ai-card">
+    <div class="panel-header">
+      <h2>Local AI investigator</h2>
+      <span class="badge">{{ report.model_status }}</span>
+    </div>
+    <div class="ai-disclaimer">
+      <span aria-hidden="true">ℹ</span>
+      <span>Qwen explanations are unverified local interpretations. Validation covers JSON format and supplied evidence IDs, not factual correctness. Deterministic hashes, findings, and policy results are preserved.</span>
+    </div>
+
+    {% if report.model_details and report.model_details.error %}
+    <div class="error" role="alert">{{ report.model_details.error }}</div>
+    {% endif %}
+
+    {% for assessment in report.ai_assessments %}
+    <div class="ai-assessment-box">
+      <h3>{{ assessment.explanation }}</h3>
+      <dl>
+        <dt>Legitimate explanation</dt>
+        <dd>{{ assessment.legitimate_explanation }}</dd>
+        <dt>Security concern</dt>
+        <dd>{{ assessment.security_concern }}</dd>
+        <dt>Uncertainty</dt>
+        <dd>{{ assessment.uncertainty }}</dd>
+      </dl>
+      <h4>Suggested next checks:</h4>
+      <ul class="feature-list">
+        {% for check in assessment.next_checks %}
+        <li>{{ check }}</li>
+        {% endfor %}
+      </ul>
+      <p class="small muted">Evidence references: {{ assessment.evidence_ids|join(', ') }}</p>
+    </div>
+    {% endfor %}
+
+    {% if report.model_details and report.model_details.digest %}
+    <p class="small muted">Model <code>{{ report.model_details.model }}</code> · Digest <code>{{ report.model_details.digest }}</code> · {{ report.model_details.license }}</p>
+    {% endif %}
+
+    <form action="/jobs/ai" method="post" class="actions spaced">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <input type="hidden" name="scan_id" value="{{ report.scan_id }}">
+      <button class="button secondary" type="submit">Investigate with local Qwen</button>
+    </form>
+  </section>
+
+  <!-- 6. Release Gate Policy Evaluation -->
+  {% if report.policy_decision %}
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Release Gate Policy Evaluation</h2>
+      <span class="badge {{ 'danger' if report.policy_decision.decision == 'BLOCK' else 'warn' if report.policy_decision.decision == 'REVIEW' else '' }}">
+        {{ report.policy_decision.decision }}
+      </span>
+    </div>
+    <p>{{ report.policy_decision.limitation }}</p>
+    {% for reason in report.policy_decision.reasons %}
+    <details open>
+      <summary>{{ reason.rule }}</summary>
+      <p>{{ reason.explanation }}</p>
+      <p class="small muted">Evidence: {{ reason.evidence_ids|join(', ') }}</p>
+    </details>
+    {% endfor %}
+    <div class="actions spaced">
+      <a class="text-link" href="/policy">Configure future scan policies →</a>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- 7. Artifact Identity & Metrics -->
+  <div class="metrics">
+    {% for name in ['identical','modified','added','removed'] %}
+    <div class="metric">
+      <span>{{ name|upper }}</span>
+      <strong class="{{ 'accent' if name == 'identical' else '' }}">{{ report.coverage|attr(name) }}</strong>
+      <small>files</small>
+    </div>
+    {% endfor %}
+  </div>
+
+  <details class="panel evidence-meta" open>
+    <summary>Artifact identity &amp; coverage</summary>
+    <dl>
+      <dt>Artifact SHA-256</dt>
+      <dd><code class="hash">{{ report.artifact_sha256 }}</code></dd>
+      <dt>Source Tree SHA-256</dt>
+      <dd><code class="hash">{{ report.source_tree_sha256 }}</code></dd>
+      <dt>Coverage Counts</dt>
+      <dd>{{ report.coverage.artifact_files }} artifact files · {{ report.coverage.source_files }} mapped source files · {{ report.coverage.excluded_source_files }} source files excluded</dd>
+      <dt>Tool &amp; Schema</dt>
+      <dd>Tool v{{ report.tool_version }} · Rules v{{ report.rule_version }} · Schema v{{ report.schema_version }}</dd>
+    </dl>
+  </details>
+
+  <!-- 8. File Explorer -->
+  <section class="panel">
+    <div class="section-heading top">
+      <h2>File explorer</h2>
+      <span class="muted">{{ report.coverage.compared_files }} paths compared</span>
+    </div>
+
+    <div class="filters">
+      <label for="file-search" class="sr-only">Search file paths</label>
+      <input id="file-search" type="search" placeholder="Search file paths…">
+      <label for="status-filter" class="sr-only">Filter by change</label>
+      <select id="status-filter">
+        <option value="all">All changes</option>
+        {% for status in ['modified','added','removed','identical'] %}
+        <option value="{{ status }}">{{ status|capitalize }}</option>
+        {% endfor %}
+      </select>
+      <span id="filter-count" role="status"></span>
+    </div>
+
+    <div class="file-list">
+      {% for file in report.file_differences %}
+      <details class="file-entry" data-path="{{ file.path|lower }}" data-status="{{ file.status }}">
+        <summary>
+          <span class="status-mark {{ file.status }}">{{ {'added':'+','removed':'−','modified':'~','identical':'='}[file.status] }}</span>
+          <code>{{ file.path }}</code>
+          <span class="badge {{ 'warn' if file.classification == 'unexplained' else 'neutral' }}">{{ file.status }}</span>
+        </summary>
+        <div class="file-detail">
+          <p class="muted small">Classification: {{ file.classification|replace('_', ' ') }} · Evidence: <code>{{ file.evidence_id }}</code>
+            <button type="button" class="copy" data-copy="{{ file.evidence_id }}">Copy evidence ID</button>
+          </p>
+          <dl>
+            <dt>Source SHA-256</dt>
+            <dd>{{ file.source_sha256 or 'Absent' }}</dd>
+            <dt>Artifact SHA-256</dt>
+            <dd>{{ file.artifact_sha256 or 'Absent' }}</dd>
+          </dl>
+          {% if file.binary %}
+          <p class="note">Binary or non-UTF-8 content. Compare hashes; text preview is unavailable.</p>
+          {% elif file.diff %}
+          <pre class="diff">{{ file.diff }}</pre>
+          {% else %}
+          <p class="small muted">Contents are byte-identical.</p>
+          {% endif %}
+          {% if file.excerpt_truncated %}
+          <p class="note">Preview truncated. Full inspected content is covered by the hashes.</p>
+          {% endif %}
+        </div>
+      </details>
+      {% endfor %}
+    </div>
+    <p id="no-matches" hidden>No files match these filters.</p>
+  </section>
+
+  <!-- 9. Coverage & Limitations -->
+  <details class="panel limitations" open id="limits">
+    <summary>Coverage &amp; limitations</summary>
+    <p class="muted small">pkgtruth performs bounded static analysis without executing target code. Review these explicit limitations:</p>
+    <ul class="feature-list">
+      {% for limitation in report.limitations %}
+      <li>{{ limitation }}</li>
+      {% endfor %}
+    </ul>
+  </details>
 </div>
-<div class="filters">
-<label for="file-search" class="sr-only">Search file paths</label>
-<input id="file-search" type="search" placeholder="Search file paths…">
-<label for="status-filter" class="sr-only">Filter by change</label>
-<select id="status-filter">
-<option value="all">All changes</option>{% for status in ['modified','added','removed','identical'] %}<option value="{{ status }}">{{ status|capitalize }}</option>{% endfor %}</select>
-<span id="filter-count" role="status">
-</span>
-</div>
-<div class="file-list">{% for file in report.file_differences %}<details class="file-entry" data-path="{{ file.path|lower }}" data-status="{{ file.status }}">
-<summary>
-<span class="status-mark {{ file.status }}">{{ {'added':'+','removed':'−','modified':'~','identical':'='}[file.status] }}</span>
-<code>{{ file.path }}</code>
-<span class="badge {{ 'warn' if file.classification == 'unexplained' else '' }}">{{ file.status }}</span>
-</summary>
-<div class="file-detail">
-<p class="muted">{{ file.classification|replace('_', ' ') }} · <code>{{ file.evidence_id }}</code> <button type="button" class="copy" data-copy="{{ file.evidence_id }}">Copy evidence ID</button>
-</p>
-<dl>
-<dt>Source SHA-256</dt>
-<dd>{{ file.source_sha256 or 'Absent' }}</dd>
-<dt>Artifact SHA-256</dt>
-<dd>{{ file.artifact_sha256 or 'Absent' }}</dd>
-</dl>{% if file.binary %}<p>Binary or non-UTF-8 content. Compare hashes; text preview is unavailable.</p>{% elif file.diff %}<pre class="diff">{{ file.diff }}</pre>{% else %}<p>Contents are byte-identical.</p>{% endif %}{% if file.excerpt_truncated %}<p class="note">Preview truncated. Full inspected content is covered by the hashes.</p>{% endif %}</div>
-</details>{% endfor %}</div>
-<p id="no-matches" hidden>No files match these filters.</p>
-<div class="section-heading">
-<h2>Evidence-backed findings</h2>
-<span class="muted">Deterministic / rules v{{ report.rule_version }}</span>
-</div>{% for finding in report.findings %}<div class="finding">
-<span class="badge {{ 'warn' if finding.severity in ['MEDIUM', 'HIGH'] else '' }}">{{ finding.severity }}</span>
-<div>
-<code>{{ finding.id }}</code>
-<p>{{ finding.explanation }}</p>
-<small>Evidence: {{ finding.evidence_ids|join(', ') }}</small>
-</div>
-</div>{% else %}<div class="panel">
-<p>No byte differences in the selected scope. This does not prove safety.</p>
-</div>{% endfor %}
-<details class="panel limitations" open>
-<summary>Coverage &amp; limitations</summary>
-<ul>{% for limitation in report.limitations %}<li>{{ limitation }}</li>{% endfor %}</ul>
-</details>
 {% endblock %}

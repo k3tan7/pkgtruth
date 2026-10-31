@@ -3,6 +3,7 @@ import hashlib
 import json
 from .models import Evidence
 from .inputs import InputError
+from packaging.version import Version, InvalidVersion
 
 
 def fingerprint(artifact, indicators, metadata, imports, *, partial):
@@ -12,6 +13,18 @@ def fingerprint(artifact, indicators, metadata, imports, *, partial):
                      for i in indicators if i.relation != 'SOURCE_ONLY'],
         'declarations': [{'field': c.field, 'values': c.artifact_values, 'path': c.path, 'evidence_ids': c.evidence_ids} for c in metadata],
         'coverage_limited': bool(partial)}
+
+
+def comparison_direction(previous_version, current_version):
+    try:
+        before, after = Version(previous_version or ''), Version(current_version or '')
+    except InvalidVersion:
+        return 'UNKNOWN', 'Version ordering is unavailable; comparison follows the selected baseline → target direction.'
+    if before < after:
+        return 'FORWARD', 'Comparing an earlier version with a later version.'
+    if before > after:
+        return 'REVERSE', 'Reverse comparison: the selected baseline is newer than the target. Added and removed refer to this selected direction.'
+    return 'SAME_VERSION', 'Comparing snapshots declaring the same version; this is not a chronological release history.'
 
 
 def compare_releases(previous, current):
@@ -28,9 +41,10 @@ def compare_releases(previous, current):
     result.model_details = {'reason': 'Historical context changed; rerun optional local AI.'}
     result.policy_decision = None
     limited = previous.release_fingerprint['coverage_limited'] or current.release_fingerprint['coverage_limited']
+    direction, direction_explanation = comparison_direction(previous.package_version, current.package_version)
     result.dna_baseline = {'scan_id': previous.scan_id, 'artifact_sha256': previous.artifact_sha256,
         'package_version': previous.package_version, 'current_version': current.package_version,
-        'coverage_limited': limited, 'meaning': 'First observed only against this supplied baseline, not all releases or trained ML.'}
+        'coverage_limited': limited, 'direction': direction, 'direction_explanation': direction_explanation, 'meaning': 'First observed only against this supplied baseline, not all releases or trained ML.'}
 
     def emit(kind, path, before, after, severity='INFORMATIONAL', refs=None):
         if len(result.historical_anomalies) >= 3000:
@@ -56,6 +70,11 @@ def compare_releases(previous, current):
         if (surface['kind'], surface['path'], surface['symbol']) not in old_surfaces:
             emit('FIRST_OBSERVED_' + surface['kind'], surface['path'], None, surface['symbol'],
                 'HIGH' if surface['kind'] in ('PTH_EXECUTION', 'CUSTOMIZE_MODULE') else 'MEDIUM', surface['evidence_ids'])
+    new_surfaces = {(s['kind'], s['path'], s['symbol']) for s in new['surfaces']}
+    for kind, path, symbol in sorted(old_surfaces - new_surfaces):
+        emit('REMOVED_' + kind, path, symbol, None)
+    for module in sorted(set(old['imports']) - set(new['imports'])):
+        emit('REMOVED_IMPORT', '<import inventory>', module, None)
     for module in sorted(set(new['imports']) - set(old['imports'])):
         emit('FIRST_OBSERVED_IMPORT', '<import inventory>', None, module)
     def declarations(value):

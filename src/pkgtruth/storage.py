@@ -55,14 +55,23 @@ class ReportStore:
 
     def watch_tables(self, connection):
         connection.execute('CREATE TABLE IF NOT EXISTS watchlist (name TEXT PRIMARY KEY, snapshot TEXT, generation INTEGER NOT NULL DEFAULT 0)')
+        columns = {row[1] for row in connection.execute('PRAGMA table_info(watchlist)')}
+        for column in ('checked_at', 'status', 'error'):
+            if column not in columns:
+                try:
+                    connection.execute(f'ALTER TABLE watchlist ADD COLUMN {column} TEXT')
+                except sqlite3.OperationalError:
+                    # Another request may have completed the additive upgrade first.
+                    if column not in {row[1] for row in connection.execute('PRAGMA table_info(watchlist)')}:
+                        raise
         connection.execute('CREATE TABLE IF NOT EXISTS watch_events (id INTEGER PRIMARY KEY, name TEXT NOT NULL, generation INTEGER NOT NULL, kind TEXT NOT NULL, body TEXT NOT NULL, created TEXT DEFAULT CURRENT_TIMESTAMP, UNIQUE(name,generation))')
 
     def watchlist(self):
         with self.connect() as connection:
             self.watch_tables(connection)
-            rows=connection.execute('SELECT name,snapshot,generation FROM watchlist ORDER BY name').fetchall()
+            rows=connection.execute('SELECT name,snapshot,generation,checked_at,status,error FROM watchlist ORDER BY name').fetchall()
         import json
-        return [{'name':r[0],'snapshot':json.loads(r[1]) if r[1] else None,'generation':r[2]} for r in rows]
+        return [{'name':r[0],'snapshot':json.loads(r[1]) if r[1] else None,'generation':r[2],'checked_at':r[3],'status':r[4],'error':r[5]} for r in rows]
 
     def add_watch(self, name):
         from .pypi import package_name
@@ -91,15 +100,23 @@ class ReportStore:
             connection.execute('BEGIN IMMEDIATE')
             row=connection.execute('SELECT snapshot,generation FROM watchlist WHERE name=?',(name,)).fetchone()
             if row is None: raise InputError('Package is not on this watchlist')
-            if row[0]==body: return {'status':'UNCHANGED','generation':row[1]}
+            if row[0]==body:
+                connection.execute("UPDATE watchlist SET checked_at=CURRENT_TIMESTAMP,status='UNCHANGED',error=NULL WHERE name=?",(name,))
+                return {'status':'UNCHANGED','generation':row[1]}
             previous=json.loads(row[0]) if row[0] else None
             kind=('BASELINE_RECORDED' if previous is None else 'NEW_RELEASE' if Version(current['version'])>Version(previous['version']) else
                   'LATEST_VERSION_CHANGED' if current['version']!=previous['version'] else 'ARTIFACT_METADATA_CHANGED')
             generation=row[1]+1
-            connection.execute('UPDATE watchlist SET snapshot=?,generation=? WHERE name=?',(body,generation,name))
+            connection.execute("UPDATE watchlist SET snapshot=?,generation=?,checked_at=CURRENT_TIMESTAMP,status=?,error=NULL WHERE name=?",(body,generation,kind,name))
             connection.execute('INSERT INTO watch_events(name,generation,kind,body) VALUES (?,?,?,?)',(name,generation,kind,body))
             connection.execute('DELETE FROM watch_events WHERE id NOT IN (SELECT id FROM watch_events ORDER BY id DESC LIMIT 200)')
         return {'status':kind,'generation':generation,'version':current['version'],'artifacts':current['artifacts']}
+
+    def watch_error(self, name, error):
+        """Persist a failed check without changing its last observed snapshot."""
+        with self.connect() as connection:
+            self.watch_tables(connection)
+            connection.execute("UPDATE watchlist SET checked_at=CURRENT_TIMESTAMP,status='ERROR',error=? WHERE name=?",(str(error)[:300],name))
 
     def watch_events(self):
         import json

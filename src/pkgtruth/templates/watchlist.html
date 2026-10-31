@@ -1,1 +1,125 @@
-{% extends 'base.html' %}{% block content %}<div class="eyebrow">MANUAL MONITORING / REGISTRY METADATA</div><h1>Release watchlist.</h1><p>Track latest-version declarations and artifact digests. Metadata changes do not prove changed downloaded bytes. No scheduled checks or public notifications are sent.</p><form action="/watchlist" method="post" class="panel"><input type="hidden" name="csrf" value="{{ csrf }}"><label for="watch-name">Exact package name</label><input type="text" id="watch-name" name="name" maxlength="100" required><button type="submit" class="button">Add package</button></form><form action="/watchlist/check" method="post"><input type="hidden" name="csrf" value="{{ csrf }}"><button type="submit" class="button secondary">Check once</button></form><section class="panel"><h2>Tracked packages</h2>{% for item in watched %}<p><strong>{{ item.name }}</strong> · {{ item.snapshot.version if item.snapshot else 'Not checked' }} · {{ item.generation }} observations with changes</p>{% else %}<p>Your watchlist is empty.</p>{% endfor %}</section>{% if results %}<section class="panel"><h2>Latest check</h2>{% for item in results %}<p>{{ item.name }}: {{ item.status }} {{ item.error or '' }}</p>{% endfor %}</section>{% endif %}<section class="panel"><h2>Recent observations</h2>{% for event in events %}<details><summary>{{ event.name }} · {{ event.kind }} · {{ event.snapshot.version }}</summary><p>{{ event.created_utc }} UTC</p>{% for artifact in event.snapshot.artifacts %}<p><code>{{ artifact.filename }}</code> <code class="hash">{{ artifact.sha256 }}</code></p>{% endfor %}</details>{% else %}<p>No observations yet.</p>{% endfor %}</section>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}Watchlist · Release Monitoring · pkgtruth{% endblock %}
+
+{% block content %}
+<a class="breadcrumb" href="/">Dashboard / Watchlist</a>
+
+<div class="eyebrow">MONITORING &amp; REGISTRY INTELLIGENCE</div>
+<h1>Release watchlist.</h1>
+<p class="subtitle">Track version declarations and cryptographic artifact digests for your dependencies. Detect newly published releases or altered registry metadata.</p>
+
+<div class="grid">
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Track a new package</h2>
+      <span class="badge neutral">PyPI Registry</span>
+    </div>
+    <form action="/watchlist" method="post">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <div class="form-row">
+        <label for="watch-name">Exact package name</label>
+        <div class="search-form compact">
+          <input type="text" id="watch-name" name="name" maxlength="100" placeholder="e.g. idna, requests, flask" required autocomplete="off">
+          <button type="submit" class="button">Add to watchlist</button>
+        </div>
+      </div>
+      <p class="help">Tracks PyPI JSON declarations. No code is executed; only registry metadata is inspected.</p>
+    </form>
+  </section>
+
+  <section class="panel flat">
+    <div class="panel-header">
+      <h2>On-demand registry check</h2>
+      <span class="badge">Manual Poll</span>
+    </div>
+    <p class="muted">Check PyPI for new versions or altered distribution digests across all tracked packages right now.</p>
+    <form action="/watchlist/check" method="post" class="actions spaced">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <button type="submit" class="button secondary">Check all tracked packages now</button>
+    </form>
+    <p class="small muted">No automated background cron jobs or third-party webhooks are executed. Monitoring is strictly on-demand.</p>
+  </section>
+</div>
+
+{% if results %}
+<section class="panel accent-border-mint">
+  <div class="panel-header">
+    <h2>Latest Check Results</h2>
+    <span class="badge">{{ results|length }} checked</span>
+  </div>
+  <div>
+    {% for item in results %}
+    <div class="data-row">
+      <div>
+        <strong>{{ item.name }}</strong>
+        <small>{{ item.error or 'Registry check completed successfully' }}</small>
+      </div>
+      <span class="badge {{ 'danger' if item.status == 'FAILED' else 'warn' if item.status == 'CHANGED' else 'neutral' }}">
+        {{ item.status }}
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="panel">
+  <div class="section-heading top">
+    <h2>Tracked packages</h2>
+    <span class="badge neutral">{{ watched|length }} monitored</span>
+  </div>
+
+  {% for item in watched %}
+  <div class="data-row">
+    <div>
+      <strong>{{ item.name }}</strong>
+      <small>
+        Current version: <strong>{{ item.snapshot.version if item.snapshot else 'Not checked yet' }}</strong> ·
+        {{ item.generation }} recorded change observation(s)
+      </small>
+    </div>
+    <div class="row-meta">
+      <a class="button secondary sm" href="/packages?name={{ item.name }}">
+        Inspect on PyPI →
+      </a>
+    </div>
+  </div>
+  {% else %}
+  <div class="empty">
+    <h3>Your watchlist is empty</h3>
+    <p>Add the core libraries your project depends on to track new versions and digest modifications.</p>
+  </div>
+  {% endfor %}
+</section>
+
+<section class="panel">
+  <div class="section-heading top">
+    <h2>Recent observations &amp; registry updates</h2>
+    <span class="badge neutral">{{ events|length }} observation(s)</span>
+  </div>
+
+  {% for event in events %}
+  <details>
+    <summary>
+      <span class="summary-left">
+        <span class="badge {{ 'warn' if event.kind == 'VERSION_CHANGED' else 'neutral' }}">{{ event.kind }}</span>
+        <strong>{{ event.name }}</strong> · Version: {{ event.snapshot.version }}
+      </span>
+      <span class="small muted">{{ event.created_utc }} UTC</span>
+    </summary>
+    <div>
+      <p class="small muted">Recorded distribution artifacts for release <code>{{ event.snapshot.version }}</code>:</p>
+      {% for artifact in event.snapshot.artifacts %}
+      <div class="artifact-digest-card">
+        <code>{{ artifact.filename }}</code>
+        <div class="hash">SHA-256: {{ artifact.sha256 }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </details>
+  {% else %}
+  <p class="muted">No observations recorded yet. Click "Check all tracked packages now" after adding packages.</p>
+  {% endfor %}
+</section>
+
+{% endblock %}

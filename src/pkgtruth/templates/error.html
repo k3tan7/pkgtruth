@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}{{ error_title }} · pkgtruth{% endblock %}
+
+{% block content %}
+<div class="page-heading">
+  <div>
+    <div class="eyebrow">REQUEST {{ status }}</div>
+    <h1>{{ error_title }}</h1>
+  </div>
+</div>
+
+<section class="panel narrow accent-border-danger" role="alert">
+  <p><strong>{{ detail }}</strong></p>
+
+  {% if status == 403 %}
+  <p class="muted">Open pkgtruth directly at the same local loopback address (e.g. <code>http://127.0.0.1:8000</code>) you used to load the form, then reload it and retry. Keep the hostname and port identical. Cross-origin requests or embedded previews that mask Origin headers cannot submit local state-modifying requests.</p>
+  {% elif status == 404 %}
+  <p class="muted">The requested investigation or release may belong to a different workspace, or the link address may be incomplete. Return to the dashboard or browse your investigations library.</p>
+  {% elif status == 413 %}
+  <p class="muted">Choose a wheel (.whl) and source archive (.zip) of up to 16 MiB each, then try again. Bounded archive limits ensure safe local memory consumption.</p>
+  {% elif status == 429 %}
+  <p class="muted">A local scan or background task is currently active. Allow the current investigation to complete, then return to the form and retry.</p>
+  {% elif status >= 500 %}
+  <p class="muted">The local application encountered an internal issue. Check that the SQLite data directory is writable and the application process is running normally.</p>
+  {% else %}
+  <p class="muted">Review the provided parameters and submit your request again.</p>
+  {% endif %}
+
+  <div class="actions spaced">
+    <a class="button" href="{{ recovery_url }}">Return to the form</a>
+    <a class="button secondary" href="/">Go to dashboard</a>
+    <a class="button secondary" href="/investigations">Browse investigations</a>
+  </div>
+</section>
+{% endblock %}

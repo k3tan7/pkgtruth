@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}Evidence Library · Investigations · pkgtruth{% endblock %}
+
+{% block content %}
+{% set decision_labels = {
+    'ALLOW': 'Allowed by rules',
+    'REVIEW': 'Needs review',
+    'BLOCK': 'Blocked by rules'
+} %}
+
+<div class="page-heading">
+  <div>
+    <div class="eyebrow">YOUR EVIDENCE LIBRARY</div>
+    <h1>Investigations</h1>
+    <p class="subtitle">Stored historical reports and verified evidence. Every result links back to exact inspected files and cryptographic digests.</p>
+  </div>
+  <div class="actions">
+    <a href="/packages" class="button">Scan a package →</a>
+    <a href="/scans/new" class="button secondary">Upload local files</a>
+  </div>
+</div>
+
+{% if scans %}
+<div class="filters">
+  <label for="investigation-search" class="sr-only">Filter investigations</label>
+  <input id="investigation-search" type="search" placeholder="Search by package name, version, artifact, or scan ID…" autocomplete="off">
+  <span id="investigation-count" class="muted small">{{ scans|length }} investigations</span>
+</div>
+
+<section class="panel compact">
+  {% for item in scans %}
+  <div class="data-row investigation-row">
+    <div>
+      <a class="row-title" href="/scans/{{ item.scan_id }}">
+        {{ item.package_name or item.input_artifact }}
+        {% if item.package_version %}<span class="muted">{{ item.package_version }}</span>{% endif %}
+      </a>
+      <small>
+        <code>{{ item.input_artifact }}</code> ·
+        ID: <code>{{ item.scan_id[:12] }}</code> ·
+        {{ 'Coverage limited (PARTIAL)' if item.analysis_status == 'PARTIAL' else 'Supported checks completed' }}
+      </small>
+    </div>
+    <div class="row-meta">
+      <span class="badge {{ 'danger' if item.policy_decision and item.policy_decision.decision == 'BLOCK' else 'warn' if not item.policy_decision or item.policy_decision.decision != 'ALLOW' else '' }}">
+        {{ decision_labels.get(item.policy_decision.decision, 'Not evaluated') if item.policy_decision else 'Not evaluated' }}
+      </span>
+      <div class="actions">
+        <a class="button secondary sm" href="/scans/{{ item.scan_id }}">View Report →</a>
+        <a class="button secondary sm" href="/scans/{{ item.scan_id }}/report.html">Capsule</a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+  <p id="no-investigations" class="empty" hidden>No investigations match your search query.</p>
+</section>
+{% else %}
+<section class="panel">
+  <div class="empty">
+    <h2>No investigations stored yet</h2>
+    <p>Search for a public Python package on PyPI or upload a local wheel to run your first inspection.</p>
+    <a class="button" href="/packages">Scan your first package →</a>
+  </div>
+</section>
+{% endif %}
+
+{% endblock %}

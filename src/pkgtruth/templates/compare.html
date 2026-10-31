@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% block title %}Compare Releases (Release DNA) · pkgtruth{% endblock %}
+
+{% block content %}
+<a class="breadcrumb" href="/">Dashboard / Compare Releases</a>
+
+<div class="eyebrow">RELEASE DNA</div>
+<h1>See how a release evolved.</h1>
+<p class="subtitle">Deterministic comparison between two inspected releases. Identify new activation surfaces, startup directives, modified entry points, and changed file inventories.</p>
+
+<div class="grid">
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Compare releases</h2>
+      <span class="badge neutral">Deterministic Diff</span>
+    </div>
+    <p class="help">Select a target release and an earlier baseline reference release. The backend compares their exact inspected cryptographic release DNA.</p>
+
+    {% if scans %}
+      {% if selected %}
+      <div class="target-callout">
+        <div>
+          <span class="eyebrow">Target Release</span>
+          <strong>{{ selected.package_name or selected.input_artifact }} {% if selected.package_version %}{{ selected.package_version }}{% endif %}</strong>
+          <p class="small muted">Scan ID: <code>{{ selected.scan_id[:12] }}</code></p>
+        </div>
+        <a class="button secondary sm" href="/compare">Change target</a>
+      </div>
+
+      <form method="post" action="/scans/{{ selected.scan_id }}/dna" id="scan-form">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+
+        <div class="form-row">
+          <label for="baseline">Select baseline reference release</label>
+          <select id="baseline" name="baseline" required>
+            {% for item in scans if item.scan_id != selected.scan_id %}
+            <option value="{{ item.scan_id }}">
+              {{ item.package_name or item.input_artifact }} {{ item.package_version or '' }} (ID: {{ item.scan_id[:8] }})
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <button class="button" type="submit" id="submit-scan">Run Release DNA Comparison →</button>
+        <div id="scan-progress" class="note" role="status" hidden>
+          Comparing release fingerprints and AST declarations…
+        </div>
+      </form>
+
+      {% else %}
+      <form method="post" action="/scans/{{ scans[0].scan_id }}/dna" id="dna-compare-form">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+
+        <div class="form-row">
+          <label for="dna-target-select">1. Choose target release (the package to evaluate)</label>
+          <select id="dna-target-select" name="target" required>
+            {% for item in scans %}
+            <option value="{{ item.scan_id }}">
+              {{ item.package_name or item.input_artifact }} {{ item.package_version or '' }} (ID: {{ item.scan_id[:8] }})
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label for="baseline">2. Choose baseline reference release (the earlier comparison point)</label>
+          <select id="baseline" name="baseline" required>
+            {% for item in scans %}
+            <option value="{{ item.scan_id }}" {% if loop.index == 2 %}selected{% endif %}>
+              {{ item.package_name or item.input_artifact }} {{ item.package_version or '' }} (ID: {{ item.scan_id[:8] }})
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <button class="button" type="submit" id="submit-scan">Run Release DNA Comparison →</button>
+        <div id="scan-progress" class="note" role="status" hidden>
+          Comparing release fingerprints and AST declarations…
+        </div>
+      </form>
+      {% endif %}
+
+    {% else %}
+      <div class="empty">
+        <h3>No investigated releases available yet</h3>
+        <p>Release DNA comparison requires stored investigations. Search for a package or upload two versions to compare them.</p>
+        <a class="button" href="/packages">Scan your first package →</a>
+      </div>
+    {% endif %}
+  </section>
+
+  <section class="panel flat">
+    <div class="panel-header">
+      <h2>Understanding Release DNA</h2>
+      <span class="badge">Historical Context</span>
+    </div>
+    <div class="note">
+      <strong>What does "baseline" mean?</strong>
+      <p class="small">A baseline is the reference release you choose to observe what changed. If your baseline is older than the target, pkgtruth runs a forward evolution check. If it is newer, pkgtruth explicitly describes a reverse comparison.</p>
+    </div>
+
+    <div>
+      <h3>What Release DNA tracks:</h3>
+      <ul class="feature-list">
+        <li><strong>First-observed startup directives:</strong> When <code>.pth</code> files or customization modules first appear.</li>
+        <li><strong>First-observed capabilities:</strong> When network sockets or subprocess calls are introduced.</li>
+        <li><strong>Entry points &amp; command changes:</strong> When console scripts are added, removed, or pointed elsewhere.</li>
+        <li><strong>File inventory shifts:</strong> Added, modified, or dropped modules.</li>
+      </ul>
+    </div>
+
+    <div class="note info">
+      <strong>Deterministic fact, not ML inference:</strong> "First observed" strictly means absent from the selected baseline. It does not claim global novelty across all uninspected historical packages.
+    </div>
+
+    <div class="actions spaced">
+      <a class="button secondary" href="/investigations">Browse stored investigations →</a>
+    </div>
+  </section>
+</div>
+
+{% if selected and selected.dna_baseline %}
+<section class="panel">
+  <div class="panel-header">
+    <h2>Recorded Historical DNA Anomalies</h2>
+    <span class="badge">{{ selected.historical_anomalies|length }} anomalies</span>
+  </div>
+  <p class="muted small">{{ selected.dna_baseline.direction_explanation or 'Historical comparison recorded.' }}</p>
+
+  {% for item in selected.historical_anomalies %}
+  <details open>
+    <summary>
+      <span class="summary-left">
+        <span class="badge {{ 'warn' if item.severity != 'INFORMATIONAL' else 'neutral' }}">{{ item.severity }}</span>
+        <span>{{ item.kind }} · <code>{{ item.path }}</code></span>
+      </span>
+    </summary>
+    <p>{{ item.explanation }}</p>
+    <pre class="diff">Baseline: {{ item.previous }}
+Current:  {{ item.current }}</pre>
+    <p class="small muted">Evidence references: {{ item.evidence_ids|join(', ') }}</p>
+  </details>
+  {% else %}
+  <p class="small muted">No historical anomalies observed against baseline <code>{{ selected.dna_baseline.scan_id[:12] }}</code>.</p>
+  {% endfor %}
+
+  <div class="actions spaced">
+    <a class="button secondary" href="/scans/{{ selected.scan_id }}">Open full investigation report →</a>
+  </div>
+</section>
+{% endif %}
+
+{% endblock %}

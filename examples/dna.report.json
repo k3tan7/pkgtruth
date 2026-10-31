@@ -530,6 +530,8 @@
     "package_version": "1.0",
     "current_version": "1.0",
     "coverage_limited": false,
+    "direction": "SAME_VERSION",
+    "direction_explanation": "Comparing snapshots declaring the same version; this is not a chronological release history.",
     "meaning": "First observed only against this supplied baseline, not all releases or trained ML."
   },
   "historical_anomalies": [
