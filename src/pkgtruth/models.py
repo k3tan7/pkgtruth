@@ -1,6 +1,6 @@
 """Versioned public report contract. No numerical trust scores."""
 from typing import Literal
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_serializer
 
 
 class StrictModel(BaseModel):
@@ -13,7 +13,7 @@ class Difference(StrictModel):
     status: Literal['added', 'removed', 'modified', 'identical']
     artifact_sha256: str | None
     source_sha256: str | None
-    classification: Literal['packaging_metadata', 'unexplained', 'identical']
+    classification: Literal['packaging_metadata', 'packaging_configuration', 'unexplained', 'identical']
     evidence_id: str
     binary: bool = False
     diff: str = ''
@@ -54,10 +54,43 @@ class Coverage(StrictModel):
     byte_limit_per_file: int
 
 
+class RecordIssue(StrictModel):
+    path: str | None
+    reason: str
+
+
+class RecordCheck(StrictModel):
+    status: Literal['NOT_CHECKED', 'VALID', 'INVALID', 'UNAVAILABLE', 'UNRESOLVED'] = 'NOT_CHECKED'
+    path: str | None = None
+    checked_files: int = 0
+    issues: list[RecordIssue] = Field(default_factory=list)
+
+
+class BehaviorIndicator(StrictModel):
+    id: str
+    kind: str
+    path: str
+    line: int
+    symbol: str
+    relation: Literal['NEW', 'PRESENT', 'SOURCE_ONLY', 'UNKNOWN']
+    explanation: str
+    evidence_ids: list[str]
+
+
+class MetadataChange(StrictModel):
+    path: str
+    field: Literal['dependencies', 'console_scripts', 'gui_scripts']
+    source_path: str | None
+    source_values: list[str] | None
+    artifact_values: list[str]
+    relation: Literal['PRESENT', 'CHANGED', 'UNKNOWN']
+    evidence_ids: list[str]
+
+
 class Report(StrictModel):
-    schema_version: Literal['1.0'] = '1.0'
-    tool_version: str = '0.1.0'
-    rule_version: str = 'local-comparison-1'
+    schema_version: Literal['1.0', '1.1'] = '1.1'
+    tool_version: str = '0.2.0'
+    rule_version: str = 'static-security-2'
     scan_id: str = Field(pattern=r'^[a-f0-9]{32}$')
     analysis_status: Literal['COMPLETE', 'PARTIAL', 'REJECTED']
     input_artifact: str
@@ -67,7 +100,10 @@ class Report(StrictModel):
     source_commit: str | None = None
     mappings: list[Mapping]
     file_differences: list[Difference]
-    record_status: Literal['NOT_CHECKED'] = 'NOT_CHECKED'
+    record_status: Literal['NOT_CHECKED', 'VALID', 'INVALID', 'UNAVAILABLE', 'UNRESOLVED'] = 'NOT_CHECKED'
+    record_check: RecordCheck = Field(default_factory=RecordCheck)
+    behavior_indicators: list[BehaviorIndicator] = Field(default_factory=list)
+    metadata_changes: list[MetadataChange] = Field(default_factory=list)
     provenance_status: Literal['NOT_CHECKED'] = 'NOT_CHECKED'
     coverage: Coverage
     findings: list[Finding]
@@ -77,3 +113,13 @@ class Report(StrictModel):
     ai_assessments: list[dict] = Field(default_factory=list)
     policy_decision: None = None
     limitations: list[str]
+
+
+    @model_serializer(mode='wrap')
+    def serialize_report(self, handler):
+        data = handler(self)
+        if self.schema_version == '1.0':
+            # Preserve the strict original wire format when re-exporting stored reports.
+            for field in ('record_check', 'behavior_indicators', 'metadata_changes'):
+                data.pop(field, None)
+        return data

@@ -35,12 +35,16 @@ def main():
         'demo-1.0.dist-info/METADATA': b'Metadata-Version: 2.1\nName: demo\nVersion: 1.0\n',
         'demo-1.0.dist-info/WHEEL': b'Wheel-Version: 1.0\nGenerator: pkgtruth-example\nRoot-Is-Purelib: true\nTag: py3-none-any\n',
     }
-    for label in ('clean', 'tampered'):
+    for label in ('clean', 'tampered', 'startup', 'record-mismatch'):
         payload = {**source, **metadata}
-        if label == 'tampered':
+        if label in ('tampered', 'startup', 'record-mismatch'):
             payload['demo/message.py'] = b'def message():\n    return "changed after review"\n'
             payload['demo/extra.py'] = b'UNEXPECTED = True\n'
-        # Fixtures have valid RECORD for all members. Milestone 1 does not check it.
+        if label == 'startup':
+            payload['startup.pth'] = b'import demo; demo.VALUE = 2\n'
+            payload['demo/message.py'] = b'import socket\n\ndef message():\n    return "changed after review"\n'
+            payload['demo-1.0.dist-info/entry_points.txt'] = b'[console_scripts]\ndemo=demo.message:message\n'
+        # Generate a self-consistent RECORD first; the mismatch case mutates afterward.
         import base64
         import csv
         import hashlib
@@ -52,6 +56,8 @@ def main():
         text = io.StringIO(newline='')
         csv.writer(text, lineterminator='\n').writerows(rows)
         payload['demo-1.0.dist-info/RECORD'] = text.getvalue().encode()
+        if label == 'record-mismatch':
+            payload['demo/message.py'] = b'def message():\n    return "changed after RECORD was written"\n'
         wheel = archive(payload)
         (ROOT / f'{label}.whl').write_bytes(wheel)
         report = analyze(wheel, archive(source), artifact_name=f'{label}.whl')

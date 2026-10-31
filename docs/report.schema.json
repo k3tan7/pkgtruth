@@ -1,5 +1,63 @@
 {
   "$defs": {
+    "BehaviorIndicator": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "path": {
+          "title": "Path",
+          "type": "string"
+        },
+        "line": {
+          "title": "Line",
+          "type": "integer"
+        },
+        "symbol": {
+          "title": "Symbol",
+          "type": "string"
+        },
+        "relation": {
+          "enum": [
+            "NEW",
+            "PRESENT",
+            "SOURCE_ONLY",
+            "UNKNOWN"
+          ],
+          "title": "Relation",
+          "type": "string"
+        },
+        "explanation": {
+          "title": "Explanation",
+          "type": "string"
+        },
+        "evidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "path",
+        "line",
+        "symbol",
+        "relation",
+        "explanation",
+        "evidence_ids"
+      ],
+      "title": "BehaviorIndicator",
+      "type": "object"
+    },
     "Coverage": {
       "additionalProperties": false,
       "properties": {
@@ -107,6 +165,7 @@
         "classification": {
           "enum": [
             "packaging_metadata",
+            "packaging_configuration",
             "unexplained",
             "identical"
           ],
@@ -259,23 +318,172 @@
       ],
       "title": "Mapping",
       "type": "object"
+    },
+    "MetadataChange": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "title": "Path",
+          "type": "string"
+        },
+        "field": {
+          "enum": [
+            "dependencies",
+            "console_scripts",
+            "gui_scripts"
+          ],
+          "title": "Field",
+          "type": "string"
+        },
+        "source_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Source Path"
+        },
+        "source_values": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Source Values"
+        },
+        "artifact_values": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Artifact Values",
+          "type": "array"
+        },
+        "relation": {
+          "enum": [
+            "PRESENT",
+            "CHANGED",
+            "UNKNOWN"
+          ],
+          "title": "Relation",
+          "type": "string"
+        },
+        "evidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "path",
+        "field",
+        "source_path",
+        "source_values",
+        "artifact_values",
+        "relation",
+        "evidence_ids"
+      ],
+      "title": "MetadataChange",
+      "type": "object"
+    },
+    "RecordCheck": {
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "default": "NOT_CHECKED",
+          "enum": [
+            "NOT_CHECKED",
+            "VALID",
+            "INVALID",
+            "UNAVAILABLE",
+            "UNRESOLVED"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Path"
+        },
+        "checked_files": {
+          "default": 0,
+          "title": "Checked Files",
+          "type": "integer"
+        },
+        "issues": {
+          "items": {
+            "$ref": "#/$defs/RecordIssue"
+          },
+          "title": "Issues",
+          "type": "array"
+        }
+      },
+      "title": "RecordCheck",
+      "type": "object"
+    },
+    "RecordIssue": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Path"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "reason"
+      ],
+      "title": "RecordIssue",
+      "type": "object"
     }
   },
   "additionalProperties": false,
   "properties": {
     "schema_version": {
-      "const": "1.0",
-      "default": "1.0",
+      "default": "1.1",
+      "enum": [
+        "1.0",
+        "1.1"
+      ],
       "title": "Schema Version",
       "type": "string"
     },
     "tool_version": {
-      "default": "0.1.0",
+      "default": "0.2.0",
       "title": "Tool Version",
       "type": "string"
     },
     "rule_version": {
-      "default": "local-comparison-1",
+      "default": "static-security-2",
       "title": "Rule Version",
       "type": "string"
     },
@@ -339,10 +547,33 @@
       "type": "array"
     },
     "record_status": {
-      "const": "NOT_CHECKED",
       "default": "NOT_CHECKED",
+      "enum": [
+        "NOT_CHECKED",
+        "VALID",
+        "INVALID",
+        "UNAVAILABLE",
+        "UNRESOLVED"
+      ],
       "title": "Record Status",
       "type": "string"
+    },
+    "record_check": {
+      "$ref": "#/$defs/RecordCheck"
+    },
+    "behavior_indicators": {
+      "items": {
+        "$ref": "#/$defs/BehaviorIndicator"
+      },
+      "title": "Behavior Indicators",
+      "type": "array"
+    },
+    "metadata_changes": {
+      "items": {
+        "$ref": "#/$defs/MetadataChange"
+      },
+      "title": "Metadata Changes",
+      "type": "array"
     },
     "provenance_status": {
       "const": "NOT_CHECKED",

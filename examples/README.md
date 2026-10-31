@@ -12,6 +12,14 @@ pkgtruth scan local --wheel examples/tampered.whl --source examples/source --jso
 
 The web app accepts the same wheel and `source.zip`; leave the source prefix blank. The results match the committed `*.report.json` outputs (when the same artifact filename is supplied).
 
-The tampered fixture changes an ordinary string and adds an inert variable; it does not simulate execution or prove malicious behavior. Its RECORD is internally consistent, demonstrating why comparison with independent source matters. RECORD validation itself is deferred to milestone 2.
+The tampered fixture changes an ordinary string and adds an inert variable; it does not simulate execution or prove malicious behavior. Its RECORD is internally consistent, demonstrating why comparison with independent source matters. Milestone 2 validates RECORD and still identifies independent source changes.
 
 `generate.py` uses pkgtruth's real shared engine and also writes `docs/report.schema.json`. Run it again and check `git diff -- examples docs/report.schema.json` to verify reproducibility. Source ZIP and source directory contain exactly the same relative files and bytes.
+
+## Security scenarios
+
+- `startup.whl`: introduces startup.pth, a socket import and a console-script declaration, with a self-consistent rewritten RECORD. Expect VALID RECORD, a HIGH new startup-surface finding and MEDIUM new capabilities/unknown script declaration. This fixture makes no network calls; the analyzer never executes its code.
+- `record-mismatch.whl`: changes a file after RECORD generation. Expect INVALID RECORD, HIGH consistency finding and PARTIAL coverage.
+- Each scenario has an actual generated `.report.json`. Reproduce with `pkgtruth scan local --wheel examples/startup.whl --source examples/source.zip --json` (exit 1).
+
+These scenarios are synthetic evidence demonstrations. Do not install them. A .pth directive is executable if installed into a processed site directory; it remains data during pkgtruth inspection.

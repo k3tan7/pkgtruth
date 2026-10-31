@@ -1,4 +1,40 @@
-# Test evidence — milestone 1
+# Test evidence — milestone 2
+
+Executed 2026-11-01 on `codex/security-analysis`, based on merged PR #2. No target package code, startup directive, build backend or target test was executed.
+
+## Final local checks
+
+- `.venv/bin/python -m pytest -q`: **112 passed**, 1 upstream Starlette/httpx TestClient deprecation warning, Python **3.14.6**, 1.05s.
+- `.venv/bin/python -m build --no-isolation`: source distribution and **pkgtruth-0.2.0-py3-none-any.whl** built successfully.
+- Installed that wheel with `--no-deps --force-reinstall` into `/private/tmp/pkgtruth-py312-verify`, whose runtime/test dependencies were already installed.
+- From `/private/tmp`: `/private/tmp/pkgtruth-py312-verify/bin/python -m pytest /Users/ketan/pkgtruth/tests -q`: **112 passed**, same upstream warning, Python **3.12.15**, 0.99s. No pytest source-path override; application imports use the installed wheel.
+- Installed `pkgtruth --version`: **0.2.0**. Dependency consistency checked with `python -m pip check`.
+- `python examples/generate.py`: real clean, tampered, startup and record-mismatch inputs/reports and schema 1.1 generated. CI checks deterministic regeneration.
+- `git diff --check` and credential/unwanted-file review before commit.
+
+New security tests cover RECORD secure algorithms, canonical hash encoding, sizes, optional omitted sizes (UNRESOLVED rather than INVALID), self-entry, missing/unlisted paths, normalized duplicates, ambiguous metadata roots, unsupported algorithms, legacy signature exclusions without provenance claims, row/byte limits, and hash/size mismatches. A row-limit regression prevents claiming unread rows are absent.
+
+They also cover self-consistent rewritten RECORD with source tampering, new/unchanged/changed .pth directives, site/user customization modules, .data startup candidates, comments/plain paths/nested .pth false positives, AST imports/calls and aliases, strings/comments/relative-import false positives, line-moved unchanged capabilities, binary/bytecode inventory, malformed/oversized source, unknown source parsing, node/indicator limits, entry-point/dependency additions/changes/removals, matching static declarations and informational omission of root build configuration, dynamic/legacy/malformed metadata, arbitrary code under .dist-info, evidence stability/references, and original schema 1.0 report round-trip preservation.
+
+The existing archive/security suite remains active. Added web/CLI tests require equal security reports and correct exit codes for clean/tampered fixtures with valid RECORD, real results panels, escaping of security excerpts, and explicit review for missing RECORD. Previous clean test fixtures now include real RECORD metadata; no rejection rule was weakened. One oversized-parser fixture initially hit ZIP-ratio rejection; replaced it with varied valid source to exercise the intended parser boundary.
+
+## Running application and browser
+
+Started `PKGTRUTH_DATA_DIR=.pkgtruth/milestone2 pkgtruth serve --port 8002` on **127.0.0.1**. Separate persistence keeps the earlier milestone's running application/store isolated.
+
+`.venv/bin/python scripts/verify_running.py --port 8002` against the real server verified all four scenarios: upload POST **303**, JSON export **200**, rendered results **200**, and exact report equality with the shared engine. Clean/tampered/startup have VALID RECORD; record-mismatch has INVALID RECORD. The startup case explicitly requires a HIGH PTH_EXECUTION finding even with valid RECORD.
+
+Browser results showed the actual startup investigation (`bfe06004e6a72ddf5b333ab9f4ab14a9`): **1 HIGH / 5 MEDIUM**, **VALID RECORD**, **7 file digests checked**, NEW NETWORK_CAPABILITY and NEW PTH_EXECUTION. Expanding the startup indicator showed the actual `import demo; demo.VALUE = 2` directive and evidence `E-S-3c075a4785b6aefd`. The preview explicitly states that execution/reachability are not established. Final results-page console returned no warnings/errors. At a 390px viewport, document client/scroll widths were both 390px; restored the original viewport and saved a final screenshot.
+
+The embedded-browser upload Origin:null restriction remains intentional. Full mouse-driven upload in an external browser is still an unverified manual check; same-origin HTTP uploads and UI results are tested. No protection was bypassed for testing.
+
+## Remote CI and remaining scope
+
+Milestone 2 [PR #3](https://github.com/k3tan7/pkgtruth/pull/3) is open. GitHub Actions [run 41235241675](https://github.com/k3tan7/pkgtruth/actions/runs/41235241675) completed successfully on implementation commit `b3684fec3fa80d14088f82047cea2f0322e93360`, including built-package tests, CLI/app validation and deterministic examples/schema regeneration. Tracking-document changes afterward require their own current-head CI checks; human review/merge remain pending. PyPI retrieval, authenticated source/provenance, runtime reachability, AI, release DNA/history, policies and public production readiness remain outside this milestone. Static aliases/declarations have documented uncertainty; see SECURITY_RULES.md.
+
+---
+
+# Historical test evidence — milestone 1 (PR #2 subsequently merged)
 
 Executed locally on 2026-11-01, on `feat/local-analysis`. No target package code was installed, imported, built or executed.
 
@@ -38,7 +74,7 @@ Embedded-browser form submission was **rejected with 403**. A temporary diagnost
 
 ## Limits
 
-- [PR #2](https://github.com/k3tan7/pkgtruth/pull/2) is open. GitHub Actions [run 41232943558](https://github.com/k3tan7/pkgtruth/actions/runs/41232943558) completed successfully for implementation commit `6303c911386d5694cc7b3f5a15707823941075e2`. Verified successful distribution build, installed-wheel tests outside the checkout, CLI/app checks, and deterministic examples/schema regeneration. Documentation changes afterward require their own current-head checks; the PR remains at the human review/merge gate.
+- [PR #2](https://github.com/k3tan7/pkgtruth/pull/2) was subsequently merged. GitHub Actions [run 41232943558](https://github.com/k3tan7/pkgtruth/actions/runs/41232943558) completed successfully for implementation commit `6303c911386d5694cc7b3f5a15707823941075e2`. Verified successful distribution build, installed-wheel tests outside the checkout, CLI/app checks, and deterministic examples/schema regeneration. The final milestone 1 head also passed CI ([run 41233098664](https://github.com/k3tan7/pkgtruth/actions/runs/41233098664)) before the maintainer merged the PR.
 - Real PyPI retrieval, RECORD/provenance verification, behavior analysis, historical DNA, policy checks, local Ollama inference and production security are not implemented or tested in milestone 1.
 - Limits are cooperative, checked between bounded operations; hard process isolation and durable jobs remain future work.
 - The upstream TestClient deprecation warning does not fail tests; no warning filter hides it.

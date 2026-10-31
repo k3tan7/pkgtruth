@@ -12,11 +12,24 @@ Implemented and acceptance-tested locally (51 passing tests on Python 3.12.15 an
 - CLI local scan, JSON output, persisted report export, loopback server command.
 - Offline clean/tampered fixtures, security and interface-equivalence tests, packaging CI.
 
-Acceptance met: installed CLI and web generate equivalent reports for clean/tampered inputs; unsafe archives are rejected; packaged templates/static assets work. Real same-origin HTTP uploads and browser results/filtering are verified. Embedded-browser uploads send an opaque Origin and are rejected; mouse-driven upload in an external browser remains a manual check. GitHub CI passed for implementation commit `6303c91` ([run](https://github.com/k3tan7/pkgtruth/actions/runs/41232943558)). Human PR review and merge are pending; verify the current head checks before merging.
+Acceptance met: installed CLI and web generate equivalent reports for clean/tampered inputs; unsafe archives are rejected; packaged templates/static assets work. Real same-origin HTTP uploads and browser results/filtering are verified. Embedded-browser uploads send an opaque Origin and are rejected; mouse-driven upload in an external browser remains a manual check. GitHub CI passed for implementation commit `6303c91` ([run](https://github.com/k3tan7/pkgtruth/actions/runs/41232943558)). PR #2 was merged by the maintainer; milestone 1 is complete.
+
+## Milestone 2 — security analysis
+
+Branch: `codex/security-analysis`, based on safely fast-forwarded main after PR #2. PR: [#3](https://github.com/k3tan7/pkgtruth/pull/3).
+
+Implemented and locally verified: 112 passing tests on Python 3.12.15 (installed wheel) and 3.14.6, plus four real localhost upload/export comparisons. GitHub Actions passed for implementation commit `b3684fe` ([run](https://github.com/k3tan7/pkgtruth/actions/runs/41235241675)). Human PR review and merge are pending; current-head checks must pass before merging.
+- RECORD hash/size/CSV coverage validation, explicit VALID/INVALID/UNAVAILABLE/UNRESOLVED states.
+- Executable .pth and customization startup surfaces, bounded AST import/call indicators, native/bytecode inventory.
+- Source-relative NEW/PRESENT/SOURCE_ONLY/UNKNOWN indicators with stable line-context evidence.
+- Static entry-point/dependency changes against explicit in-scope declarations, without running build tools.
+- Narrow generated-metadata classification, explicit parser limits and partial coverage.
+- Shared CLI/web reports, RECORD/impact/metadata panels, schema 1.1 with legacy reading, offline security/false-positive regressions.
+
+Acceptance met in offline fixtures and shared CLI/web integration tests: source tampering and new startup capabilities are detected with a rewritten valid RECORD; unchanged capabilities and known generated metadata remain informational. Stop at human PR review; do not merge automatically.
 
 ## Later milestones (not delivered)
 
-2. RECORD validation, executable startup surfaces, AST indicators and false-positive tests.
 3. Exact-version PyPI retrieval, network boundaries and conservative source revision resolution.
 4. Real Ollama/Qwen inference with schema/evidence validation and recorded model/license/digest evidence.
 5. Deterministic release DNA and interactive timeline.
@@ -24,7 +37,7 @@ Acceptance met: installed CLI and web generate equivalent reports for clean/tamp
 7. Watchlists, durable background jobs, progress, monitoring and product completion.
 8. Authentication, private-scan isolation, PostgreSQL/migrations, isolated workers, operational acceptance.
 
-Milestone 1 deliberately has no PyPI search, model inference, behavioral detection, provenance verification, Release Gate or watchlist. Reports mark these checks explicitly unimplemented. Continue after milestone 1 PR review and merge.
+Current product has no PyPI search, model inference, provenance verification, runtime behavior proof, Release Gate or watchlist. Continue to milestone 3 only after milestone 2 PR review and merge.
 
 ## Event timing
 

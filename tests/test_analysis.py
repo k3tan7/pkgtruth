@@ -3,19 +3,20 @@ import pytest
 from pkgtruth.analysis import analyze
 from pkgtruth.inputs import InputError
 from pkgtruth.models import Report
-from conftest import make_zip
+from conftest import make_zip, make_wheel
 
 
 def test_clean_is_reproducible_and_validates(package_pair):
-    files, wheel = package_pair
+    files, _ = package_pair
+    wheel = make_wheel(files)
     one = analyze(wheel, make_zip(files), artifact_name='demo.whl')
     two = analyze(wheel, make_zip(files), artifact_name='demo.whl')
     assert one == two
     assert one.analysis_status == 'COMPLETE'
     assert one.coverage.identical == 2
-    assert not one.findings
+    assert all(f.rule == 'PACKAGING_METADATA' and f.severity == 'INFORMATIONAL' for f in one.findings)
     assert one.provenance_status == 'NOT_CHECKED'
-    assert one.record_status == 'NOT_CHECKED'
+    assert one.record_status == 'VALID'
     assert one.policy_decision is None
     assert Report.model_validate_json(one.model_dump_json()) == one
 
@@ -67,9 +68,10 @@ def test_no_guessed_ambiguous_mapping(package_pair):
 
 def test_metadata_does_not_create_false_security_claim(package_pair):
     files, _ = package_pair
-    wheel = make_zip({**files, 'demo-1.0.dist-info/METADATA': b'Name: demo\nVersion: 1.0\n'})
+    wheel = make_wheel({**files, 'demo-1.0.dist-info/METADATA': b'Name: demo\nVersion: 1.0\n'})
     report = analyze(wheel, make_zip(files))
-    assert len(report.findings) == 1
+    assert len(report.findings) == 3
+    assert all(f.severity == 'INFORMATIONAL' for f in report.findings)
     assert report.findings[0].severity == 'INFORMATIONAL'
     assert report.findings[0].rule == 'PACKAGING_METADATA'
     assert 'not verified' in report.findings[0].explanation

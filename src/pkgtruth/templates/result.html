@@ -9,11 +9,34 @@
 </div>
 <a class="button secondary" href="/scans/{{ report.scan_id }}/report.json">↓ Export JSON</a>
 </div>
+{% set high_count = report.findings|selectattr('severity', 'equalto', 'HIGH')|list|length %}
+{% set medium_count = report.findings|selectattr('severity', 'equalto', 'MEDIUM')|list|length %}
 <section class="verdict">
-<span class="badge {{ 'warn' if report.analysis_status == 'PARTIAL' else '' }}">{{ report.analysis_status }}</span>
-<h2>{{ 'Mapping needs review' if report.analysis_status == 'PARTIAL' else 'Comparison finished' }}</h2>
-<p>{{ report.findings|length }} differences recorded. Findings describe content changes, not proof of malicious activity.</p>
-<small>Provenance: NOT_CHECKED &nbsp; / &nbsp; RECORD: NOT_CHECKED &nbsp; / &nbsp; AI: NOT_CONFIGURED</small>
+<span class="badge {{ 'warn' if report.analysis_status == 'PARTIAL' or high_count else '' }}">Coverage: {{ report.analysis_status }}</span>
+<h2>{{ 'Coverage needs review' if report.analysis_status == 'PARTIAL' else 'Inspect these findings' if high_count or medium_count else 'Inspection finished' }}</h2>
+<p>{{ high_count }} HIGH / {{ medium_count }} MEDIUM · {{ report.findings|length }} findings recorded. Static indicators and content changes do not establish malicious activity.</p>
+<small>Provenance: NOT_CHECKED &nbsp; / &nbsp; RECORD: {{ report.record_status }} &nbsp; / &nbsp; AI: NOT_CONFIGURED</small>
+</section>
+<section class="panel">
+<h2>Wheel RECORD consistency <span class="badge {{ 'warn' if report.record_status != 'VALID' else '' }}">{{ report.record_status }}</span></h2>
+<p>{{ report.record_check.checked_files }} file digests checked. A valid RECORD establishes internal consistency, not publisher authenticity or safety.</p>
+{% if report.record_check.issues %}<details><summary>{{ report.record_check.issues|length }} consistency issues</summary><ul>{% for issue in report.record_check.issues %}<li><code>{{ issue.path or '(wheel inventory)' }}</code>: {{ issue.reason }}</li>{% endfor %}</ul></details>{% endif %}
+</section>
+<section class="panel">
+<h2>Install impact preview</h2>
+<p class="muted">Potential activation surfaces and syntactic capabilities relative to the selected source. Execution and reachability are not established.</p>
+{% for indicator in report.behavior_indicators %}<details><summary><span class="badge {{ 'warn' if indicator.relation in ['NEW','UNKNOWN'] else '' }}">{{ indicator.relation }}</span> {{ indicator.kind }} · <code>{{ indicator.path }}:{{ indicator.line }}</code></summary>
+<p><code>{{ indicator.symbol }}</code></p><p>{{ indicator.explanation }}</p>
+{% for reference in indicator.evidence_ids %}{% set item = evidence_lookup[reference] %}<p><code>{{ reference }}</code> <button type="button" class="copy" data-copy="{{ reference }}">Copy evidence ID</button></p>{% if item.artifact_excerpt is not none %}<pre class="diff">{{ item.artifact_excerpt }}</pre>{% endif %}{% if item.source_excerpt is not none %}<p>Source context:</p><pre class="diff">{{ item.source_excerpt }}</pre>{% endif %}{% endfor %}</details>
+{% else %}<p>No supported indicators identified. This does not prove absence of other behavior.</p>{% endfor %}
+</section>
+<section class="panel">
+<h2>Entry points &amp; dependencies</h2>
+<p class="muted">Static declarations only; values are not resolved, installed or invoked. UNKNOWN means no unambiguous in-scope source baseline.</p>
+{% for change in report.metadata_changes %}<details><summary><span class="badge {{ 'warn' if change.relation != 'PRESENT' else '' }}">{{ change.relation }}</span> {{ change.field }} · <code>{{ change.path }}</code></summary>
+<p>Source: <code>{{ change.source_path or '(baseline unavailable)' }}</code></p><pre class="diff">{{ change.source_values|join('\n') if change.source_values is not none else 'UNKNOWN' }}</pre>
+<p>Artifact:</p><pre class="diff">{{ change.artifact_values|join('\n') or '(none declared)' }}</pre><p>Evidence: {{ change.evidence_ids|join(', ') }}</p></details>
+{% else %}<p>No supported distribution metadata declarations found.</p>{% endfor %}
 </section>
 <div class="metrics">{% for name in ['identical','modified','added','removed'] %}<div class="metric">
 <span>{{ name|upper }}</span>
@@ -62,7 +85,7 @@
 <h2>Evidence-backed findings</h2>
 <span class="muted">Deterministic / rules v{{ report.rule_version }}</span>
 </div>{% for finding in report.findings %}<div class="finding">
-<span class="badge {{ 'warn' if finding.severity == 'MEDIUM' else '' }}">{{ finding.severity }}</span>
+<span class="badge {{ 'warn' if finding.severity in ['MEDIUM', 'HIGH'] else '' }}">{{ finding.severity }}</span>
 <div>
 <code>{{ finding.id }}</code>
 <p>{{ finding.explanation }}</p>
