@@ -2,7 +2,7 @@
 
 ## Milestone 1 — local Web + CLI scanner
 
-Branch: `feat/local-analysis`. PR: pending publication. Review/merge gate: do not merge automatically.
+Branch: `feat/local-analysis`. PR: [#2](https://github.com/k3tan7/pkgtruth/pull/2). Review/merge gate: do not merge automatically.
 
 Implemented and acceptance-tested locally (51 passing tests on Python 3.12.15 and 3.14.6):
 - Installable Python package and one deterministic analysis service.
@@ -12,7 +12,7 @@ Implemented and acceptance-tested locally (51 passing tests on Python 3.12.15 an
 - CLI local scan, JSON output, persisted report export, loopback server command.
 - Offline clean/tampered fixtures, security and interface-equivalence tests, packaging CI.
 
-Acceptance met: installed CLI and web generate equivalent reports for clean/tampered inputs; unsafe archives are rejected; packaged templates/static assets work. Real same-origin HTTP uploads and browser results/filtering are verified. Embedded-browser uploads send an opaque Origin and are rejected; mouse-driven upload in an external browser remains a manual check. Remote CI and PR review are pending.
+Acceptance met: installed CLI and web generate equivalent reports for clean/tampered inputs; unsafe archives are rejected; packaged templates/static assets work. Real same-origin HTTP uploads and browser results/filtering are verified. Embedded-browser uploads send an opaque Origin and are rejected; mouse-driven upload in an external browser remains a manual check. GitHub CI passed for implementation commit `6303c91` ([run](https://github.com/k3tan7/pkgtruth/actions/runs/41232943558)). Human PR review and merge are pending; verify the current head checks before merging.
 
 ## Later milestones (not delivered)
 

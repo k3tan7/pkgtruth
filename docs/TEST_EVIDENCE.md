@@ -38,7 +38,7 @@ Embedded-browser form submission was **rejected with 403**. A temporary diagnost
 
 ## Limits
 
-- Remote CI status and PR link: pending publication; do not infer remote success from local tests.
+- [PR #2](https://github.com/k3tan7/pkgtruth/pull/2) is open. GitHub Actions [run 41232943558](https://github.com/k3tan7/pkgtruth/actions/runs/41232943558) completed successfully for implementation commit `6303c911386d5694cc7b3f5a15707823941075e2`. Verified successful distribution build, installed-wheel tests outside the checkout, CLI/app checks, and deterministic examples/schema regeneration. Documentation changes afterward require their own current-head checks; the PR remains at the human review/merge gate.
 - Real PyPI retrieval, RECORD/provenance verification, behavior analysis, historical DNA, policy checks, local Ollama inference and production security are not implemented or tested in milestone 1.
 - Limits are cooperative, checked between bounded operations; hard process isolation and durable jobs remain future work.
 - The upstream TestClient deprecation warning does not fail tests; no warning filter hides it.
