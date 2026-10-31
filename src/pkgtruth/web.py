@@ -72,7 +72,7 @@ class LocalBoundary:
 
 
 def create_app(store: ReportStore | None = None) -> FastAPI:
-    app = FastAPI(title='pkgtruth', version='0.2.0', docs_url=None, redoc_url=None)
+    app = FastAPI(title='pkgtruth', version='0.3.0', docs_url=None, redoc_url=None)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=['127.0.0.1', 'localhost', '[::1]', 'testserver'])
     app.add_middleware(LocalBoundary)
     app.mount('/static', StaticFiles(directory=ROOT / 'static'), name='static')
@@ -144,6 +144,39 @@ def create_app(store: ReportStore | None = None) -> FastAPI:
                 response = page(request, 'new.html', error=str(exc))
                 response.status_code = 422
                 return response
+
+    @app.get('/packages', response_class=HTMLResponse)
+    def packages(request: Request, name: str = ''):
+        from .pypi import project_versions
+        project, error = None, None
+        if name:
+            try:
+                project = project_versions(name)
+            except (InputError, OSError) as exc:
+                error = str(exc)
+        return page(request, 'packages.html', project=project, error=error)
+
+    @app.post('/scans/pypi')
+    async def remote_scan(request: Request):
+        from .pypi import scan_pypi
+        origin = request.headers.get('origin')
+        if (origin and origin != str(request.base_url).rstrip('/')) or request.headers.get('sec-fetch-site') == 'cross-site':
+            raise HTTPException(403, 'Cross-origin scans are forbidden')
+        if scan_lock.locked():
+            raise HTTPException(429, 'A local scan is already running')
+        async with scan_lock:
+            async with request.form(max_files=0, max_fields=3, max_part_size=2048) as form:
+                token, cookie = form.get('csrf'), request.cookies.get('csrf')
+                if not isinstance(token, str) or not cookie or not hmac.compare_digest(token.encode(), cookie.encode()):
+                    raise HTTPException(403, 'Invalid form token')
+                try:
+                    report = await run_in_threadpool(scan_pypi, form.get('name'), form.get('version'))
+                    await run_in_threadpool(reports.save, report)
+                except (InputError, OSError) as exc:
+                    response = page(request, 'packages.html', project=None, error=str(exc))
+                    response.status_code = 422
+                    return response
+        return RedirectResponse(f'/scans/{report.scan_id}', status_code=303)
 
     def lookup(scan_id):
         if not re.fullmatch('[a-f0-9]{32}', scan_id):

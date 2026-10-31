@@ -23,6 +23,11 @@ def parser() -> argparse.ArgumentParser:
     local.add_argument('--source-prefix', default='', help='Exact relative source root, e.g. src or release/src; default: archive/directory root')
     local.add_argument('--json', action='store_true', help='Emit the versioned report JSON to stdout')
     local.add_argument('--output', type=Path, help='Also save JSON to this file')
+    remote = modes.add_parser('pypi', help='Investigate one exact PyPI release; never build source distributions')
+    remote.add_argument('--name', required=True)
+    remote.add_argument('--version', required=True)
+    remote.add_argument('--json', action='store_true')
+    remote.add_argument('--output', type=Path)
     report = commands.add_parser('report', help='Export a locally stored report')
     report.add_argument('scan_id')
     report.add_argument('--output', type=Path, required=True)
@@ -60,8 +65,12 @@ def main(argv: list[str] | None = None) -> int:
                 raise InputError('Report not found')
             args.output.write_text(report.model_dump_json(indent=2) + '\n')
             return 0
-        source = args.source if args.source.is_dir() else read_bounded_file(args.source)
-        report = analyze(read_bounded_file(args.wheel), source, artifact_name=args.wheel.name, source_prefix=args.source_prefix)
+        if args.mode == 'pypi':
+            from .pypi import scan_pypi
+            report = scan_pypi(args.name, args.version)
+        else:
+            source = args.source if args.source.is_dir() else read_bounded_file(args.source)
+            report = analyze(read_bounded_file(args.wheel), source, artifact_name=args.wheel.name, source_prefix=args.source_prefix)
         store.save(report)
         serialized = report.model_dump_json(indent=2)
         if args.output:

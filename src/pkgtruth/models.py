@@ -88,16 +88,19 @@ class MetadataChange(StrictModel):
 
 
 class Report(StrictModel):
-    schema_version: Literal['1.0', '1.1'] = '1.1'
-    tool_version: str = '0.2.0'
+    schema_version: Literal['1.0', '1.1', '1.2'] = '1.2'
+    tool_version: str = '0.3.0'
     rule_version: str = 'static-security-2'
     scan_id: str = Field(pattern=r'^[a-f0-9]{32}$')
     analysis_status: Literal['COMPLETE', 'PARTIAL', 'REJECTED']
     input_artifact: str
-    source_resolution: Literal['LOCAL_USER_MAPPING'] = 'LOCAL_USER_MAPPING'
+    source_resolution: Literal['LOCAL_USER_MAPPING', 'PYPI_TAG_UNVERIFIED', 'ARTIFACT_ONLY'] = 'LOCAL_USER_MAPPING'
     artifact_sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
     source_tree_sha256: str
     source_commit: str | None = None
+    package_name: str | None = None
+    package_version: str | None = None
+    retrieval: dict = Field(default_factory=dict)
     mappings: list[Mapping]
     file_differences: list[Difference]
     record_status: Literal['NOT_CHECKED', 'VALID', 'INVALID', 'UNAVAILABLE', 'UNRESOLVED'] = 'NOT_CHECKED'
@@ -118,6 +121,9 @@ class Report(StrictModel):
     @model_serializer(mode='wrap')
     def serialize_report(self, handler):
         data = handler(self)
+        if self.schema_version in ('1.0', '1.1'):
+            for field in ('package_name', 'package_version', 'retrieval'):
+                data.pop(field, None)
         if self.schema_version == '1.0':
             # Preserve the strict original wire format when re-exporting stored reports.
             for field in ('record_check', 'behavior_indicators', 'metadata_changes'):

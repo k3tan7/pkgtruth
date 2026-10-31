@@ -1,6 +1,6 @@
 {
-  "schema_version": "1.1",
-  "tool_version": "0.2.0",
+  "schema_version": "1.2",
+  "tool_version": "0.3.0",
   "rule_version": "static-security-2",
   "scan_id": "a26e9e4fef868f0041f5cc1c33c28c43",
   "analysis_status": "COMPLETE",
@@ -9,6 +9,9 @@
   "artifact_sha256": "ee0c94d8d9b3d3394f532bf27f41eb4f5345721648b97ed4a108a2850d72f37c",
   "source_tree_sha256": "6e23e2147fdd9ad2c363af9c8f650dc3c42cf253c2fb4756f9f6d12a33fe3b45",
   "source_commit": null,
+  "package_name": null,
+  "package_version": null,
+  "retrieval": {},
   "mappings": [
     {
       "source_prefix": "",

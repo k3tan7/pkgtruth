@@ -18,7 +18,7 @@ Acceptance met: installed CLI and web generate equivalent reports for clean/tamp
 
 Branch: `codex/security-analysis`, based on safely fast-forwarded main after PR #2. PR: [#3](https://github.com/k3tan7/pkgtruth/pull/3).
 
-Implemented and locally verified: 112 passing tests on Python 3.12.15 (installed wheel) and 3.14.6, plus four real localhost upload/export comparisons. GitHub Actions passed for implementation commit `b3684fe` ([run](https://github.com/k3tan7/pkgtruth/actions/runs/41235241675)). Human PR review and merge are pending; current-head checks must pass before merging.
+Implemented and locally verified: 112 passing tests on Python 3.12.15 (installed wheel) and 3.14.6, plus four real localhost upload/export comparisons. GitHub Actions passed for implementation commit `b3684fe` ([run](https://github.com/k3tan7/pkgtruth/actions/runs/41235241675)). PR #3 was merged by the maintainer after final-head and main CI passed.
 - RECORD hash/size/CSV coverage validation, explicit VALID/INVALID/UNAVAILABLE/UNRESOLVED states.
 - Executable .pth and customization startup surfaces, bounded AST import/call indicators, native/bytecode inventory.
 - Source-relative NEW/PRESENT/SOURCE_ONLY/UNKNOWN indicators with stable line-context evidence.
@@ -43,3 +43,9 @@ Current product has no PyPI search, model inference, provenance verification, ru
 
 Checked 2026-11-01 against [MLH event schedule](https://events.mlh.com/events/15017-hacktoberfest-hack-day-sonipat-x-rishihood-university).
 The detailed schedule lists building from 6 PM to 6 AM and evaluation starting at 6 AM. No explicit submission freeze is published there, and the header displays CDT despite the Indian venue. Treat 6 AM on November 1 in the venue's local time as a conservative planning target, not a verified freeze. Preserve final testing time; organizer announcements remain authoritative.
+
+## Consolidated implementation — feat/package-intelligence
+
+Based on merged main dcaf3c1. One final integration PR, per the consolidated user request. Priority order: real PyPI, real local Qwen, Release DNA, then remaining unique features and deployment.
+
+PyPI adapter implemented with offline regression tests (130 total passing): exact versions, bounded public HTTPS downloads, digest/size checks, claimed repository discovery, exact-tag commit correspondence and explicit artifact-only partial reports. Exact GitHub tag ZIP comments are an unverified correspondence fallback when unauthenticated API quota is exhausted; no default branch substitution. Real idna 3.10 registry digest verified. Qwen/DNA and later features are still in progress/unverified.

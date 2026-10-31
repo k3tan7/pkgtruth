@@ -264,7 +264,7 @@ def declarations(files: dict[str, bytes], deadline):
     return values
 
 
-def inspect_security(artifact, source, differences, evidence, findings, deadline):
+def inspect_security(artifact, source, differences, evidence, findings, deadline, *, source_available=True):
     record = validate_record(artifact)
     record_id = 'E-R-' + identity([record.model_dump(), [(p, hashlib.sha256(v).hexdigest()) for p, v in sorted(artifact.items())]])
     evidence.append(Evidence(id=record_id, path=record.path or '<wheel inventory>',
@@ -301,7 +301,7 @@ def inspect_security(artifact, source, differences, evidence, findings, deadline
                 break
             current = (published or {}).get((kind, symbol))
             previous = (reviewed or {}).get((kind, symbol))
-            relation = 'UNKNOWN' if published is None or reviewed is None else 'PRESENT' if current and previous else 'NEW' if current else 'SOURCE_ONLY'
+            relation = 'UNKNOWN' if not source_available or published is None or reviewed is None else 'PRESENT' if current and previous else 'NEW' if current else 'SOURCE_ONLY'
             line, explanation = current or previous
             key = identity([kind, path, symbol, relation, hashlib.sha256(artifact.get(path, b'')).hexdigest(), hashlib.sha256(source.get(path, b'')).hexdigest()])
             eid = 'E-S-' + key

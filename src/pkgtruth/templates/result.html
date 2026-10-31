@@ -11,6 +11,8 @@
 </div>
 {% set high_count = report.findings|selectattr('severity', 'equalto', 'HIGH')|list|length %}
 {% set medium_count = report.findings|selectattr('severity', 'equalto', 'MEDIUM')|list|length %}
+{% if report.package_name %}<section class="panel"><h2>{{ report.package_name }} / {{ report.package_version }}</h2><p>Registry digest verified: {{ report.retrieval.registry_digest_verified }}. Source correspondence: {{ report.retrieval.source_correspondence }}.</p><p>Claimed source: <code>{{ report.retrieval.claimed_repository or 'UNRESOLVED' }}</code></p><p>Resolved revision: <code>{{ report.source_commit or 'UNRESOLVED' }}</code>. Matching tags are unverified claims, not authenticated provenance.</p></section>{% endif %}
+{% if report.source_resolution == 'ARTIFACT_ONLY' %}<div class="error">Source correspondence is unresolved. Files are unmatched artifact content; differences and new behavior relative to source cannot be established.</div>{% endif %}
 <section class="verdict">
 <span class="badge {{ 'warn' if report.analysis_status == 'PARTIAL' or high_count else '' }}">Coverage: {{ report.analysis_status }}</span>
 <h2>{{ 'Coverage needs review' if report.analysis_status == 'PARTIAL' else 'Inspect these findings' if high_count or medium_count else 'Inspection finished' }}</h2>
