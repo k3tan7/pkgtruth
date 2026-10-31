@@ -211,6 +211,7 @@
   ],
   "historical_anomalies": [],
   "model_status": "NOT_CONFIGURED",
+  "model_details": {},
   "ai_assessments": [],
   "policy_decision": null,
   "limitations": [

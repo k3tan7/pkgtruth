@@ -49,3 +49,5 @@ The detailed schedule lists building from 6 PM to 6 AM and evaluation starting a
 Based on merged main dcaf3c1. One final integration PR, per the consolidated user request. Priority order: real PyPI, real local Qwen, Release DNA, then remaining unique features and deployment.
 
 PyPI adapter implemented with offline regression tests (130 total passing): exact versions, bounded public HTTPS downloads, digest/size checks, claimed repository discovery, exact-tag commit correspondence and explicit artifact-only partial reports. Exact GitHub tag ZIP comments are an unverified correspondence fallback when unauthenticated API quota is exhausted; no default branch substitution. Real idna 3.10 registry digest verified. Qwen/DNA and later features are still in progress/unverified.
+
+Local Qwen integration: real pinned-model generation validated (812 prompt / 397 output tokens, 19.58s), offline schema/evidence/digest/failure tests passing. CLI and browser share the investigator; model conclusions remain unverified and cannot overwrite deterministic facts. Historical DNA is next.

@@ -178,6 +178,22 @@ def create_app(store: ReportStore | None = None) -> FastAPI:
                     return response
         return RedirectResponse(f'/scans/{report.scan_id}', status_code=303)
 
+    @app.post('/scans/{scan_id}/investigate')
+    async def ai_investigation(request: Request, scan_id: str):
+        from .investigator import investigate
+        if request.headers.get('origin') not in (None, str(request.base_url).rstrip('/')) or request.headers.get('sec-fetch-site') == 'cross-site':
+            raise HTTPException(403, 'Cross-origin requests forbidden')
+        async with request.form(max_files=0, max_fields=1, max_part_size=2048) as form:
+            token, cookie = form.get('csrf'), request.cookies.get('csrf')
+            if not isinstance(token, str) or not cookie or not hmac.compare_digest(token.encode(), cookie.encode()):
+                raise HTTPException(403, 'Invalid form token')
+        if scan_lock.locked():
+            raise HTTPException(429, 'An investigation is already running')
+        async with scan_lock:
+            report = await run_in_threadpool(investigate, lookup(scan_id))
+            await run_in_threadpool(reports.save, report)
+        return RedirectResponse(f'/scans/{scan_id}', status_code=303)
+
     def lookup(scan_id):
         if not re.fullmatch('[a-f0-9]{32}', scan_id):
             raise HTTPException(404, 'Report not found')

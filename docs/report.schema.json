@@ -641,10 +641,20 @@
       "type": "array"
     },
     "model_status": {
-      "const": "NOT_CONFIGURED",
       "default": "NOT_CONFIGURED",
+      "enum": [
+        "NOT_CONFIGURED",
+        "VALIDATED",
+        "REJECTED",
+        "UNAVAILABLE"
+      ],
       "title": "Model Status",
       "type": "string"
+    },
+    "model_details": {
+      "additionalProperties": true,
+      "title": "Model Details",
+      "type": "object"
     },
     "ai_assessments": {
       "items": {

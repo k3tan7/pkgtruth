@@ -17,7 +17,7 @@
 <span class="badge {{ 'warn' if report.analysis_status == 'PARTIAL' or high_count else '' }}">Coverage: {{ report.analysis_status }}</span>
 <h2>{{ 'Coverage needs review' if report.analysis_status == 'PARTIAL' else 'Inspect these findings' if high_count or medium_count else 'Inspection finished' }}</h2>
 <p>{{ high_count }} HIGH / {{ medium_count }} MEDIUM · {{ report.findings|length }} findings recorded. Static indicators and content changes do not establish malicious activity.</p>
-<small>Provenance: NOT_CHECKED &nbsp; / &nbsp; RECORD: {{ report.record_status }} &nbsp; / &nbsp; AI: NOT_CONFIGURED</small>
+<small>Provenance: NOT_CHECKED &nbsp; / &nbsp; RECORD: {{ report.record_status }} &nbsp; / &nbsp; AI: {{ report.model_status }}</small>
 </section>
 <section class="panel">
 <h2>Wheel RECORD consistency <span class="badge {{ 'warn' if report.record_status != 'VALID' else '' }}">{{ report.record_status }}</span></h2>
@@ -40,6 +40,11 @@
 <p>Artifact:</p><pre class="diff">{{ change.artifact_values|join('\n') or '(none declared)' }}</pre><p>Evidence: {{ change.evidence_ids|join(', ') }}</p></details>
 {% else %}<p>No supported distribution metadata declarations found.</p>{% endfor %}
 </section>
+<section class="panel"><h2>Local AI investigator <span class="badge">{{ report.model_status }}</span></h2><p>Qwen explanations are unverified interpretations. Validation covers JSON and supplied evidence IDs, not factual correctness. Deterministic hashes, findings and policy results are preserved.</p>
+{% if report.model_details.error %}<div class="error">{{ report.model_details.error }}</div>{% endif %}
+{% for assessment in report.ai_assessments %}<h3>{{ assessment.explanation }}</h3><p><strong>Legitimate explanation:</strong> {{ assessment.legitimate_explanation }}</p><p><strong>Security concern:</strong> {{ assessment.security_concern }}</p><p><strong>Uncertainty:</strong> {{ assessment.uncertainty }}</p><ul>{% for check in assessment.next_checks %}<li>{{ check }}</li>{% endfor %}</ul><p>Evidence: {{ assessment.evidence_ids|join(', ') }}</p>{% endfor %}
+{% if report.model_details.digest %}<p>Model <code>{{ report.model_details.model }}</code> · digest <code>{{ report.model_details.digest }}</code> · {{ report.model_details.license }}</p>{% endif %}
+<form action="/scans/{{ report.scan_id }}/investigate" method="post"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="button secondary" type="submit">Investigate with local Qwen</button></form></section>
 <div class="metrics">{% for name in ['identical','modified','added','removed'] %}<div class="metric">
 <span>{{ name|upper }}</span>
 <strong class="{{ 'accent' if name == 'identical' else '' }}">{{ report.coverage|attr(name) }}</strong>

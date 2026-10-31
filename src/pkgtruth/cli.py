@@ -22,12 +22,17 @@ def parser() -> argparse.ArgumentParser:
     local.add_argument('--source', type=Path, required=True)
     local.add_argument('--source-prefix', default='', help='Exact relative source root, e.g. src or release/src; default: archive/directory root')
     local.add_argument('--json', action='store_true', help='Emit the versioned report JSON to stdout')
+    local.add_argument('--ai', action='store_true', help='Request validated local Qwen investigation')
     local.add_argument('--output', type=Path, help='Also save JSON to this file')
     remote = modes.add_parser('pypi', help='Investigate one exact PyPI release; never build source distributions')
     remote.add_argument('--name', required=True)
     remote.add_argument('--version', required=True)
     remote.add_argument('--json', action='store_true')
+    remote.add_argument('--ai', action='store_true')
     remote.add_argument('--output', type=Path)
+    ai = commands.add_parser('investigate', help='Explain a stored scan using pinned local Qwen')
+    ai.add_argument('scan_id')
+    ai.add_argument('--json', action='store_true')
     report = commands.add_parser('report', help='Export a locally stored report')
     report.add_argument('scan_id')
     report.add_argument('--output', type=Path, required=True)
@@ -43,8 +48,9 @@ def render(report: Report) -> str:
         f'Artifact SHA-256: {report.artifact_sha256}',
         f'Files: {c.identical} identical / {c.modified} modified / {c.added} added / {c.removed} removed',
         *[f'[{f.severity}] {f.id} {f.explanation}' for f in report.findings],
-        f'RECORD: {report.record_status} (consistency only). Provenance: NOT_CHECKED. AI: NOT_CONFIGURED. Policy: not evaluated.',
+        f'RECORD: {report.record_status} (consistency only). Provenance: NOT_CHECKED. AI: {report.model_status}. Policy: not evaluated.',
         f'Static indicators: {len(report.behavior_indicators)} / metadata comparisons: {len(report.metadata_changes)}',
+        *[f'AI (unverified explanation): {a["explanation"]}' for a in report.ai_assessments],
         'Static inspection covers the selected scope only. Matching content does not prove safety.',
     ])
 
@@ -59,6 +65,15 @@ def main(argv: list[str] | None = None) -> int:
             uvicorn.run('pkgtruth.web:app', host='127.0.0.1', port=args.port)
             return 0
         store = ReportStore()
+        if args.command == 'investigate':
+            from .investigator import investigate
+            original = store.get(args.scan_id)
+            if original is None:
+                raise InputError('Report not found')
+            report = investigate(original)
+            store.save(report)
+            print(report.model_dump_json(indent=2) if args.json else render(report))
+            return 0 if report.model_status == 'VALIDATED' else 1
         if args.command == 'report':
             report = store.get(args.scan_id)
             if report is None:
@@ -71,6 +86,9 @@ def main(argv: list[str] | None = None) -> int:
         else:
             source = args.source if args.source.is_dir() else read_bounded_file(args.source)
             report = analyze(read_bounded_file(args.wheel), source, artifact_name=args.wheel.name, source_prefix=args.source_prefix)
+        if args.ai:
+            from .investigator import investigate
+            report = investigate(report)
         store.save(report)
         serialized = report.model_dump_json(indent=2)
         if args.output:
